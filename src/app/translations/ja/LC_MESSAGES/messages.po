@@ -1,0 +1,490 @@
+# Japanese translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-08-16 12:00+0000\n"
+"PO-Revision-Date: 2025-08-16 12:00+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: ja\n"
+"Language-Team: ja <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+msgid "Portfolio Optimization App"
+msgstr "ポートフォリオ最適化アプリ"
+
+msgid "Analysis Settings"
+msgstr "分析設定"
+
+msgid "Ticker Symbols"
+msgstr "ティッカーシンボル"
+
+msgid "Enter ticker symbols for assets to analyze (e.g., AAPL, 7203.T)"
+msgstr "分析したい銘柄のティッカーシンボルを入力（例：AAPL, 7203.T）"
+
+msgid "Add Asset"
+msgstr "銘柄を追加"
+
+msgid "2-20 assets can be entered"
+msgstr "2-20銘柄まで入力可能"
+
+msgid "Analysis Period"
+msgstr "分析期間"
+
+msgid "Start Date"
+msgstr "開始日"
+
+msgid "End Date"
+msgstr "終了日"
+
+msgid "Minimum 1 year, maximum 10 years"
+msgstr "最低1年、最大10年"
+
+msgid "Risk-free Rate (Annual %)"
+msgstr "無リスク金利（年率%）"
+
+msgid "Risk-free rate (usually government bond rate)"
+msgstr "リスクフリー金利（通常は国債金利）"
+
+msgid "Specify Target Return"
+msgstr "目標リターンを指定"
+
+msgid "Target Return (Annual %)"
+msgstr "目標リターン（年率%）"
+
+msgid "Simulation Count"
+msgstr "シミュレーション回数"
+
+msgid "Number of Monte Carlo simulation trials"
+msgstr "モンテカルロシミュレーションの試行回数"
+
+msgid "Start Analysis"
+msgstr "分析開始"
+
+msgid "Reset"
+msgstr "リセット"
+
+msgid "Please start portfolio analysis"
+msgstr "ポートフォリオ分析を開始してください"
+
+msgid "Set up assets and period in the left settings panel, then click the 'Start Analysis' button."
+msgstr "左側の設定パネルで銘柄と期間を設定し、「分析開始」ボタンをクリックしてください。"
+
+msgid "Efficient Frontier"
+msgstr "効率的フロンティア"
+
+msgid "Asset Allocation"
+msgstr "資産配分"
+
+msgid "Correlation Analysis"
+msgstr "相関分析"
+
+msgid "Individual Assets"
+msgstr "個別資産"
+
+msgid "Simulation Details"
+msgstr "シミュレーション詳細"
+
+msgid "Data"
+msgstr "データ"
+
+msgid "Maximum Sharpe Ratio"
+msgstr "最大シャープレシオ"
+
+msgid "Minimum Variance"
+msgstr "最小分散"
+
+msgid "Target Return Achievement"
+msgstr "目標リターン達成"
+
+msgid "Basic Statistics"
+msgstr "基本統計量"
+
+msgid "Percentile Analysis"
+msgstr "パーセンタイル分析"
+
+msgid "Percentile"
+msgstr "パーセンタイル"
+
+msgid "Return"
+msgstr "リターン"
+
+msgid "Risk"
+msgstr "リスク"
+
+msgid "Sharpe Ratio"
+msgstr "シャープレシオ"
+
+msgid "Risk Metrics (VaR)"
+msgstr "リスク指標 (VaR)"
+
+msgid "Confidence Intervals"
+msgstr "信頼区間"
+
+msgid "Efficiency Metrics"
+msgstr "効率性指標"
+
+msgid "Simulation Count Comparison"
+msgstr "シミュレーション回数比較"
+
+msgid "You can check the difference in results with different simulation counts"
+msgstr "異なるシミュレーション回数での結果の違いを確認できます"
+
+msgid "Run Simulation Count Comparison"
+msgstr "シミュレーション回数比較を実行"
+
+msgid "Individual Asset Statistics"
+msgstr "個別資産統計"
+
+msgid "Portfolio Allocation"
+msgstr "ポートフォリオ配分"
+
+msgid "Asset"
+msgstr "資産"
+
+msgid "Allocation (%)"
+msgstr "配分(%)"
+
+msgid "Portfolio Metrics"
+msgstr "ポートフォリオメトリクス"
+
+msgid "Item"
+msgstr "項目"
+
+msgid "Value"
+msgstr "値"
+
+msgid "Expected Return"
+msgstr "期待リターン"
+
+msgid "JSON Export"
+msgstr "JSON出力"
+
+msgid "English"
+msgstr "English"
+
+msgid "Japanese"
+msgstr "日本語"
+
+msgid "Please make investment decisions at your own risk. The calculation results provided by this application are for reference purposes only."
+msgstr "投資判断は自己責任で行ってください。本アプリの計算結果は参考情報です。"
+
+msgid "Processing..."
+msgstr "処理中"
+
+msgid "Home"
+msgstr "ホーム"
+
+msgid "Help"
+msgstr "ヘルプ"
+
+msgid "Starting process..."
+msgstr "処理を開始しています..."
+
+msgid "Error"
+msgstr "エラー"
+
+msgid "Close"
+msgstr "閉じる"
+
+msgid "User Guide"
+msgstr "使い方ガイド"
+
+msgid "Ticker Symbol Input"
+msgstr "ティッカーシンボル入力"
+
+msgid "Enter ticker symbols for the stocks you want to analyze (e.g., AAPL, 7203.T, MSFT)"
+msgstr "分析したい銘柄のティッカーシンボルを入力してください（例: AAPL, 7203.T, MSFT）"
+
+msgid "Period Setting"
+msgstr "期間設定"
+
+msgid "Set the data collection period (minimum 1 year, maximum 10 years)"
+msgstr "データ取得期間を設定してください（最低1年、最大10年）"
+
+msgid "Parameter Adjustment"
+msgstr "パラメータ調整"
+
+msgid "Adjust risk-free rate and number of simulations as needed"
+msgstr "無リスク金利やシミュレーション回数を必要に応じて調整できます"
+
+msgid "Run Analysis"
+msgstr "分析実行"
+
+msgid "Click the \"Start Analysis\" button to begin processing"
+msgstr "「分析開始」ボタンで処理を開始します"
+
+msgid "View Results"
+msgstr "結果確認"
+
+msgid "Review efficient frontier, optimal portfolios, asset allocation, and other results"
+msgstr "効率的フロンティア、最適ポートフォリオ、資産配分などの結果を確認できます"
+
+msgid "Export & Save"
+msgstr "出力・保存"
+
+msgid "Results can be exported in JSON format"
+msgstr "結果はJSON形式でエクスポート可能です"
+
+msgid "Important Notes:"
+msgstr "注意事項:"
+
+msgid "This app is for informational purposes only"
+msgstr "本アプリは情報提供目的のみです"
+
+msgid "Please make investment decisions at your own risk"
+msgstr "投資判断は自己責任で行ってください"
+
+msgid "Analysis is based on historical data and does not guarantee future results"
+msgstr "過去のデータに基づく分析であり、将来の結果を保証するものではありません"
+
+msgid "Return Statistics"
+msgstr "リターン統計"
+
+msgid "Risk Statistics"
+msgstr "リスク統計"
+
+msgid "Sharpe Ratio Statistics"
+msgstr "シャープレシオ統計"
+
+msgid "Mean"
+msgstr "平均"
+
+msgid "Std Dev"
+msgstr "標準偏差"
+
+msgid "Min"
+msgstr "最小値"
+
+msgid "Max"
+msgstr "最大値"
+
+msgid "Median"
+msgstr "中央値"
+
+msgid "95% Confidence Interval"
+msgstr "95%信頼区間"
+
+msgid "99% Confidence Interval"
+msgstr "99%信頼区間"
+
+msgid "Confidence intervals show the range containing 95%%/99%% of simulation results"
+msgstr "信頼区間はシミュレーション結果の95%%/99%%を含む範囲を示します"
+
+msgid "Return VaR"
+msgstr "リターンVaR"
+
+msgid "Risk VaR"
+msgstr "リスクVaR"
+
+msgid "95% VaR"
+msgstr "95% VaR"
+
+msgid "99% VaR"
+msgstr "99% VaR"
+
+msgid "95% Upper"
+msgstr "95%上限"
+
+msgid "99% Upper"
+msgstr "99%上限"
+
+msgid "VaR indicates the maximum expected loss at the specified confidence level"
+msgstr "VaRは指定された信頼水準での最大予想損失を示します"
+
+msgid "Failed to calculate optimal portfolio"
+msgstr "最適ポートフォリオの計算に失敗しました"
+
+msgid "Annual Standard Deviation"
+msgstr "年率標準偏差"
+
+msgid "Optimal Portfolio"
+msgstr "最適ポートフォリオ"
+
+msgid "Risk-adjusted Return"
+msgstr "リスク調整済みリターン"
+
+msgid "Simulations"
+msgstr "シミュレーション"
+
+msgid "Execution Count"
+msgstr "実行回数"
+
+msgid "Portfolios Above Risk-Free Rate"
+msgstr "無リスク金利を上回るポートフォリオ"
+
+msgid "Positive Sharpe Ratio"
+msgstr "正のシャープレシオ"
+
+msgid "Best Sharpe Ratio"
+msgstr "最高シャープレシオ"
+
+msgid "Minimum Risk"
+msgstr "最小リスク"
+
+msgid "VaR (95%)"
+msgstr "VaR (95%)"
+
+msgid "No data"
+msgstr "データなし"
+
+msgid "At least %d assets are required"
+msgstr "最低%d銘柄が必要です"
+
+msgid "Maximum %d assets allowed"
+msgstr "最大%d銘柄まで許可されています"
+
+msgid "Duplicate ticker symbols found"
+msgstr "重複するティッカーシンボルが見つかりました"
+
+msgid "Invalid ticker symbol format: %s"
+msgstr "無効なティッカーシンボル形式: %s"
+
+msgid "Start date must be before end date"
+msgstr "開始日は終了日より前である必要があります"
+
+msgid "Analysis period must be at least %d year(s)"
+msgstr "分析期間は最低%d年である必要があります"
+
+msgid "Analysis period cannot exceed %d years"
+msgstr "分析期間は%d年を超えることはできません"
+
+msgid "End date cannot be in the future"
+msgstr "終了日は未来の日付にできません"
+
+msgid "Start date may be too old. Data may not be available"
+msgstr "開始日が古すぎる可能性があります。データが利用できない場合があります"
+
+msgid "Invalid date format (please use YYYY-MM-DD format)"
+msgstr "無効な日付形式です（YYYY-MM-DD形式を使用してください）"
+
+msgid "Target return must be -50%% or higher"
+msgstr "目標リターンは-50%%以上である必要があります"
+
+msgid "Target return must be 100%% or lower"
+msgstr "目標リターンは100%%以下である必要があります"
+
+msgid "Target return is set very high"
+msgstr "目標リターンが非常に高く設定されています"
+
+msgid "Target return is set very low"
+msgstr "目標リターンが非常に低く設定されています"
+
+msgid "Risk-free rate must be 0%% or higher"
+msgstr "無リスク金利は0%%以上である必要があります"
+
+msgid "Risk-free rate must be 10%% or lower"
+msgstr "無リスク金利は10%%以下である必要があります"
+
+msgid "Simulation count must be at least %s"
+msgstr "シミュレーション回数は最低%s回である必要があります"
+
+msgid "Simulation count cannot exceed %s"
+msgstr "シミュレーション回数は%s回を超えることはできません"
+
+msgid "High simulation count may result in longer calculation time"
+msgstr "シミュレーション回数が多いと計算時間が長くなる場合があります"
+
+msgid "%s is required"
+msgstr "%sは必須です"
+
+msgid "Starting data retrieval..."
+msgstr "データ取得を開始しています..."
+
+msgid "Retrieving data for %s..."
+msgstr "%sのデータを取得しています..."
+
+msgid "%s: Insufficient data (days retrieved: %d)"
+msgstr "%s: データが不十分です（取得日数: %d日）"
+
+msgid "Consolidating data..."
+msgstr "データを統合しています..."
+
+msgid "Less than 2 assets have valid data available"
+msgstr "有効なデータを持つ資産が2つ未満です"
+
+msgid "Preprocessing data..."
+msgstr "データを前処理しています..."
+
+msgid "Failed to retrieve data for the following assets: %s"
+msgstr "以下の資産のデータ取得に失敗しました: %s"
+
+msgid "Data retrieval completed"
+msgstr "データ取得が完了しました"
+
+msgid "Error occurred during data retrieval: %s"
+msgstr "データ取得中にエラーが発生しました: %s"
+
+msgid "%s: Extreme price movements detected (%d days)"
+msgstr "%s: 極端な価格変動が検出されました（%d日）"
+
+msgid "%s: Zero or negative prices detected (%d days)"
+msgstr "%s: ゼロまたは負の価格が検出されました（%d日）"
+
+msgid "%s: High data missing ratio detected (missing: %s)"
+msgstr "%s: 高いデータ欠損率が検出されました（欠損: %s）"
+
+msgid "Data not loaded. Call load_data() first."
+msgstr "データが読み込まれていません。最初にload_data()を呼び出してください。"
+
+msgid "Optimization failed"
+msgstr "最適化に失敗しました"
+
+msgid "Failed to calculate efficient frontier"
+msgstr "効率的フロンティアの計算に失敗しました"
+
+msgid "Monte Carlo Simulation"
+msgstr "モンテカルロシミュレーション"
+
+msgid "Risk (Standard Deviation)"
+msgstr "リスク（標準偏差）"
+
+msgid "No Data"
+msgstr "データなし"
+
+msgid "Others"
+msgstr "その他"
+
+msgid "Allocation"
+msgstr "配分"
+
+msgid "Weight"
+msgstr "重み"
+
+msgid "Correlation Coefficient"
+msgstr "相関係数"
+
+msgid "Asset Correlation Matrix"
+msgstr "資産相関行列"
+
+msgid "Risk-Return Characteristics of Individual Assets"
+msgstr "個別資産のリスク・リターン特性"
+
+msgid "Risk Contribution"
+msgstr "リスク貢献度"
+
+msgid "Risk Contribution Analysis"
+msgstr "リスク貢献度分析"
+
+msgid "Assets"
+msgstr "資産"
+
+msgid "Risk Contribution (%)"
+msgstr "リスク貢献度（%）"
+
+msgid "Optimal Portfolio Asset Allocation (Maximum Sharpe Ratio)"
+msgstr "最適ポートフォリオ資産配分（最大シャープレシオ）"
+
+msgid "Optimal Portfolio Asset Allocation (Minimum Variance)"
+msgstr "最適ポートフォリオ資産配分（最小分散）"
+
+msgid "Optimal Portfolio Asset Allocation (Target Return Achievement)"
+msgstr "最適ポートフォリオ資産配分（目標リターン達成）"

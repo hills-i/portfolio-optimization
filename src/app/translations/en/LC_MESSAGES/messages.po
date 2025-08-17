@@ -1,0 +1,490 @@
+# English translations for PROJECT.
+# Copyright (C) 2025 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2025-08-16 12:00+0000\n"
+"PO-Revision-Date: 2025-08-16 12:00+0000\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.17.0\n"
+
+msgid "Portfolio Optimization App"
+msgstr "Portfolio Optimization App"
+
+msgid "Analysis Settings"
+msgstr "Analysis Settings"
+
+msgid "Ticker Symbols"
+msgstr "Ticker Symbols"
+
+msgid "Enter ticker symbols for assets to analyze (e.g., AAPL, 7203.T)"
+msgstr "Enter ticker symbols for assets to analyze (e.g., AAPL, 7203.T)"
+
+msgid "Add Asset"
+msgstr "Add Asset"
+
+msgid "2-20 assets can be entered"
+msgstr "2-20 assets can be entered"
+
+msgid "Analysis Period"
+msgstr "Analysis Period"
+
+msgid "Start Date"
+msgstr "Start Date"
+
+msgid "End Date"
+msgstr "End Date"
+
+msgid "Minimum 1 year, maximum 10 years"
+msgstr "Minimum 1 year, maximum 10 years"
+
+msgid "Risk-free Rate (Annual %)"
+msgstr "Risk-free Rate (Annual %)"
+
+msgid "Risk-free rate (usually government bond rate)"
+msgstr "Risk-free rate (usually government bond rate)"
+
+msgid "Specify Target Return"
+msgstr "Specify Target Return"
+
+msgid "Target Return (Annual %)"
+msgstr "Target Return (Annual %)"
+
+msgid "Simulation Count"
+msgstr "Simulation Count"
+
+msgid "Number of Monte Carlo simulation trials"
+msgstr "Number of Monte Carlo simulation trials"
+
+msgid "Start Analysis"
+msgstr "Start Analysis"
+
+msgid "Reset"
+msgstr "Reset"
+
+msgid "Please start portfolio analysis"
+msgstr "Please start portfolio analysis"
+
+msgid "Set up assets and period in the left settings panel, then click the 'Start Analysis' button."
+msgstr "Set up assets and period in the left settings panel, then click the 'Start Analysis' button."
+
+msgid "Efficient Frontier"
+msgstr "Efficient Frontier"
+
+msgid "Asset Allocation"
+msgstr "Asset Allocation"
+
+msgid "Correlation Analysis"
+msgstr "Correlation Analysis"
+
+msgid "Individual Assets"
+msgstr "Individual Assets"
+
+msgid "Simulation Details"
+msgstr "Simulation Details"
+
+msgid "Data"
+msgstr "Data"
+
+msgid "Maximum Sharpe Ratio"
+msgstr "Maximum Sharpe Ratio"
+
+msgid "Minimum Variance"
+msgstr "Minimum Variance"
+
+msgid "Target Return Achievement"
+msgstr "Target Return Achievement"
+
+msgid "Basic Statistics"
+msgstr "Basic Statistics"
+
+msgid "Percentile Analysis"
+msgstr "Percentile Analysis"
+
+msgid "Percentile"
+msgstr "Percentile"
+
+msgid "Return"
+msgstr "Return"
+
+msgid "Risk"
+msgstr "Risk"
+
+msgid "Sharpe Ratio"
+msgstr "Sharpe Ratio"
+
+msgid "Risk Metrics (VaR)"
+msgstr "Risk Metrics (VaR)"
+
+msgid "Confidence Intervals"
+msgstr "Confidence Intervals"
+
+msgid "Efficiency Metrics"
+msgstr "Efficiency Metrics"
+
+msgid "Simulation Count Comparison"
+msgstr "Simulation Count Comparison"
+
+msgid "You can check the difference in results with different simulation counts"
+msgstr "You can check the difference in results with different simulation counts"
+
+msgid "Run Simulation Count Comparison"
+msgstr "Run Simulation Count Comparison"
+
+msgid "Individual Asset Statistics"
+msgstr "Individual Asset Statistics"
+
+msgid "Portfolio Allocation"
+msgstr "Portfolio Allocation"
+
+msgid "Asset"
+msgstr "Asset"
+
+msgid "Allocation (%)"
+msgstr "Allocation (%)"
+
+msgid "Portfolio Metrics"
+msgstr "Portfolio Metrics"
+
+msgid "Item"
+msgstr "Item"
+
+msgid "Value"
+msgstr "Value"
+
+msgid "Expected Return"
+msgstr "Expected Return"
+
+msgid "JSON Export"
+msgstr "JSON Export"
+
+msgid "English"
+msgstr "English"
+
+msgid "Japanese"
+msgstr "Japanese"
+
+msgid "Please make investment decisions at your own risk. The calculation results provided by this application are for reference purposes only."
+msgstr "Please make investment decisions at your own risk. The calculation results provided by this application are for reference purposes only."
+
+msgid "Processing..."
+msgstr "Processing..."
+
+msgid "Home"
+msgstr "Home"
+
+msgid "Help"
+msgstr "Help"
+
+msgid "Starting process..."
+msgstr "Starting process..."
+
+msgid "Error"
+msgstr "Error"
+
+msgid "Close"
+msgstr "Close"
+
+msgid "User Guide"
+msgstr "User Guide"
+
+msgid "Ticker Symbol Input"
+msgstr "Ticker Symbol Input"
+
+msgid "Enter ticker symbols for the stocks you want to analyze (e.g., AAPL, 7203.T, MSFT)"
+msgstr "Enter ticker symbols for the stocks you want to analyze (e.g., AAPL, 7203.T, MSFT)"
+
+msgid "Period Setting"
+msgstr "Period Setting"
+
+msgid "Set the data collection period (minimum 1 year, maximum 10 years)"
+msgstr "Set the data collection period (minimum 1 year, maximum 10 years)"
+
+msgid "Parameter Adjustment"
+msgstr "Parameter Adjustment"
+
+msgid "Adjust risk-free rate and number of simulations as needed"
+msgstr "Adjust risk-free rate and number of simulations as needed"
+
+msgid "Run Analysis"
+msgstr "Run Analysis"
+
+msgid "Click the \"Start Analysis\" button to begin processing"
+msgstr "Click the \"Start Analysis\" button to begin processing"
+
+msgid "View Results"
+msgstr "View Results"
+
+msgid "Review efficient frontier, optimal portfolios, asset allocation, and other results"
+msgstr "Review efficient frontier, optimal portfolios, asset allocation, and other results"
+
+msgid "Export & Save"
+msgstr "Export & Save"
+
+msgid "Results can be exported in JSON format"
+msgstr "Results can be exported in JSON format"
+
+msgid "Important Notes:"
+msgstr "Important Notes:"
+
+msgid "This app is for informational purposes only"
+msgstr "This app is for informational purposes only"
+
+msgid "Please make investment decisions at your own risk"
+msgstr "Please make investment decisions at your own risk"
+
+msgid "Analysis is based on historical data and does not guarantee future results"
+msgstr "Analysis is based on historical data and does not guarantee future results"
+
+msgid "Return Statistics"
+msgstr "Return Statistics"
+
+msgid "Risk Statistics"
+msgstr "Risk Statistics"
+
+msgid "Sharpe Ratio Statistics"
+msgstr "Sharpe Ratio Statistics"
+
+msgid "Mean"
+msgstr "Mean"
+
+msgid "Std Dev"
+msgstr "Std Dev"
+
+msgid "Min"
+msgstr "Min"
+
+msgid "Max"
+msgstr "Max"
+
+msgid "Median"
+msgstr "Median"
+
+msgid "95% Confidence Interval"
+msgstr "95% Confidence Interval"
+
+msgid "99% Confidence Interval"
+msgstr "99% Confidence Interval"
+
+msgid "Confidence intervals show the range containing 95%%/99%% of simulation results"
+msgstr "Confidence intervals show the range containing 95%%/99%% of simulation results"
+
+msgid "Return VaR"
+msgstr "Return VaR"
+
+msgid "Risk VaR"
+msgstr "Risk VaR"
+
+msgid "95% VaR"
+msgstr "95% VaR"
+
+msgid "99% VaR"
+msgstr "99% VaR"
+
+msgid "95% Upper"
+msgstr "95% Upper"
+
+msgid "99% Upper"
+msgstr "99% Upper"
+
+msgid "VaR indicates the maximum expected loss at the specified confidence level"
+msgstr "VaR indicates the maximum expected loss at the specified confidence level"
+
+msgid "Failed to calculate optimal portfolio"
+msgstr "Failed to calculate optimal portfolio"
+
+msgid "Annual Standard Deviation"
+msgstr "Annual Standard Deviation"
+
+msgid "Optimal Portfolio"
+msgstr "Optimal Portfolio"
+
+msgid "Risk-adjusted Return"
+msgstr "Risk-adjusted Return"
+
+msgid "Simulations"
+msgstr "Simulations"
+
+msgid "Execution Count"
+msgstr "Execution Count"
+
+msgid "Portfolios Above Risk-Free Rate"
+msgstr "Portfolios Above Risk-Free Rate"
+
+msgid "Positive Sharpe Ratio"
+msgstr "Positive Sharpe Ratio"
+
+msgid "Best Sharpe Ratio"
+msgstr "Best Sharpe Ratio"
+
+msgid "Minimum Risk"
+msgstr "Minimum Risk"
+
+msgid "VaR (95%)"
+msgstr "VaR (95%)"
+
+msgid "No data"
+msgstr "No data"
+
+msgid "At least %d assets are required"
+msgstr "At least %d assets are required"
+
+msgid "Maximum %d assets allowed"
+msgstr "Maximum %d assets allowed"
+
+msgid "Duplicate ticker symbols found"
+msgstr "Duplicate ticker symbols found"
+
+msgid "Invalid ticker symbol format: %s"
+msgstr "Invalid ticker symbol format: %s"
+
+msgid "Start date must be before end date"
+msgstr "Start date must be before end date"
+
+msgid "Analysis period must be at least %d year(s)"
+msgstr "Analysis period must be at least %d year(s)"
+
+msgid "Analysis period cannot exceed %d years"
+msgstr "Analysis period cannot exceed %d years"
+
+msgid "End date cannot be in the future"
+msgstr "End date cannot be in the future"
+
+msgid "Start date may be too old. Data may not be available"
+msgstr "Start date may be too old. Data may not be available"
+
+msgid "Invalid date format (please use YYYY-MM-DD format)"
+msgstr "Invalid date format (please use YYYY-MM-DD format)"
+
+msgid "Target return must be -50%% or higher"
+msgstr "Target return must be -50%% or higher"
+
+msgid "Target return must be 100%% or lower"
+msgstr "Target return must be 100%% or lower"
+
+msgid "Target return is set very high"
+msgstr "Target return is set very high"
+
+msgid "Target return is set very low"
+msgstr "Target return is set very low"
+
+msgid "Risk-free rate must be 0%% or higher"
+msgstr "Risk-free rate must be 0%% or higher"
+
+msgid "Risk-free rate must be 10%% or lower"
+msgstr "Risk-free rate must be 10%% or lower"
+
+msgid "Simulation count must be at least %s"
+msgstr "Simulation count must be at least %s"
+
+msgid "Simulation count cannot exceed %s"
+msgstr "Simulation count cannot exceed %s"
+
+msgid "High simulation count may result in longer calculation time"
+msgstr "High simulation count may result in longer calculation time"
+
+msgid "%s is required"
+msgstr "%s is required"
+
+msgid "Starting data retrieval..."
+msgstr "Starting data retrieval..."
+
+msgid "Retrieving data for %s..."
+msgstr "Retrieving data for %s..."
+
+msgid "%s: Insufficient data (days retrieved: %d)"
+msgstr "%s: Insufficient data (days retrieved: %d)"
+
+msgid "Consolidating data..."
+msgstr "Consolidating data..."
+
+msgid "Less than 2 assets have valid data available"
+msgstr "Less than 2 assets have valid data available"
+
+msgid "Preprocessing data..."
+msgstr "Preprocessing data..."
+
+msgid "Failed to retrieve data for the following assets: %s"
+msgstr "Failed to retrieve data for the following assets: %s"
+
+msgid "Data retrieval completed"
+msgstr "Data retrieval completed"
+
+msgid "Error occurred during data retrieval: %s"
+msgstr "Error occurred during data retrieval: %s"
+
+msgid "%s: Extreme price movements detected (%d days)"
+msgstr "%s: Extreme price movements detected (%d days)"
+
+msgid "%s: Zero or negative prices detected (%d days)"
+msgstr "%s: Zero or negative prices detected (%d days)"
+
+msgid "%s: High data missing ratio detected (missing: %s)"
+msgstr "%s: High data missing ratio detected (missing: %s)"
+
+msgid "Data not loaded. Call load_data() first."
+msgstr "Data not loaded. Call load_data() first."
+
+msgid "Optimization failed"
+msgstr "Optimization failed"
+
+msgid "Failed to calculate efficient frontier"
+msgstr "Failed to calculate efficient frontier"
+
+msgid "Monte Carlo Simulation"
+msgstr "Monte Carlo Simulation"
+
+msgid "Risk (Standard Deviation)"
+msgstr "Risk (Standard Deviation)"
+
+msgid "No Data"
+msgstr "No Data"
+
+msgid "Others"
+msgstr "Others"
+
+msgid "Allocation"
+msgstr "Allocation"
+
+msgid "Weight"
+msgstr "Weight"
+
+msgid "Correlation Coefficient"
+msgstr "Correlation Coefficient"
+
+msgid "Asset Correlation Matrix"
+msgstr "Asset Correlation Matrix"
+
+msgid "Risk-Return Characteristics of Individual Assets"
+msgstr "Risk-Return Characteristics of Individual Assets"
+
+msgid "Risk Contribution"
+msgstr "Risk Contribution"
+
+msgid "Risk Contribution Analysis"
+msgstr "Risk Contribution Analysis"
+
+msgid "Assets"
+msgstr "Assets"
+
+msgid "Risk Contribution (%%)"
+msgstr "Risk Contribution (%%)"
+
+msgid "Optimal Portfolio Asset Allocation (Maximum Sharpe Ratio)"
+msgstr "Optimal Portfolio Asset Allocation (Maximum Sharpe Ratio)"
+
+msgid "Optimal Portfolio Asset Allocation (Minimum Variance)"
+msgstr "Optimal Portfolio Asset Allocation (Minimum Variance)"
+
+msgid "Optimal Portfolio Asset Allocation (Target Return Achievement)"
+msgstr "Optimal Portfolio Asset Allocation (Target Return Achievement)"

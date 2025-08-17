@@ -1,6 +1,7 @@
 import re
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Tuple
+from flask_babel import gettext as _
 
 class InputValidator:
     """入力データの検証クラス"""
@@ -30,17 +31,17 @@ class InputValidator:
         # 数量チェック
         if len(tickers) < self.config.MIN_ASSETS:
             result['valid'] = False
-            result['errors'].append(f'最低{self.config.MIN_ASSETS}銘柄が必要です')
+            result['errors'].append(_('At least %d assets are required') % self.config.MIN_ASSETS)
             
         if len(tickers) > self.config.MAX_ASSETS:
             result['valid'] = False
-            result['errors'].append(f'最大{self.config.MAX_ASSETS}銘柄まで入力可能です')
+            result['errors'].append(_('Maximum %d assets allowed') % self.config.MAX_ASSETS)
         
         # 重複チェック
         unique_tickers = set(ticker.upper() for ticker in tickers)
         if len(unique_tickers) != len(tickers):
             result['valid'] = False
-            result['errors'].append('重複するティッカーシンボルがあります')
+            result['errors'].append(_('Duplicate ticker symbols found'))
         
         # 形式チェック
         invalid_tickers = []
@@ -50,7 +51,7 @@ class InputValidator:
         
         if invalid_tickers:
             result['valid'] = False
-            result['errors'].append(f'無効な形式のティッカーシンボル: {", ".join(invalid_tickers)}')
+            result['errors'].append(_('Invalid ticker symbol format: %s') % ', '.join(invalid_tickers))
         
         return result
     
@@ -78,33 +79,33 @@ class InputValidator:
             # 開始日 < 終了日チェック
             if start >= end:
                 result['valid'] = False
-                result['errors'].append('開始日は終了日より前の日付を指定してください')
+                result['errors'].append(_('Start date must be before end date'))
                 return result
             
             # 期間の長さチェック
             period_years = (end - start).days / 365.25
             if period_years < self.config.MIN_ANALYSIS_YEARS:
                 result['valid'] = False
-                result['errors'].append(f'分析期間は最低{self.config.MIN_ANALYSIS_YEARS}年必要です')
+                result['errors'].append(_('Analysis period must be at least %d year(s)') % self.config.MIN_ANALYSIS_YEARS)
             
             if period_years > self.config.MAX_ANALYSIS_YEARS:
                 result['valid'] = False
-                result['errors'].append(f'分析期間は最大{self.config.MAX_ANALYSIS_YEARS}年まで可能です')
+                result['errors'].append(_('Analysis period cannot exceed %d years') % self.config.MAX_ANALYSIS_YEARS)
             
             # 未来日付チェック
             today = datetime.now()
             if end > today:
                 result['valid'] = False
-                result['errors'].append('終了日に未来の日付は指定できません')
+                result['errors'].append(_('End date cannot be in the future'))
             
             # データ取得可能期間チェック（過去20年程度を想定）
             min_start_date = today - timedelta(days=20*365)
             if start < min_start_date:
-                result['warnings'].append('開始日が古すぎる可能性があります。データが取得できない場合があります')
+                result['warnings'].append(_('Start date may be too old. Data may not be available'))
                 
         except ValueError as e:
             result['valid'] = False
-            result['errors'].append('日付形式が正しくありません (YYYY-MM-DD形式で入力してください)')
+            result['errors'].append(_('Invalid date format (please use YYYY-MM-DD format)'))
         
         return result
     
@@ -127,18 +128,18 @@ class InputValidator:
         # 範囲チェック (-50% ~ +100%)
         if target_return < -0.5:
             result['valid'] = False
-            result['errors'].append('目標リターンは-50%以上を指定してください')
+            result['errors'].append(_('Target return must be -50% or higher'))
             
         if target_return > 1.0:
             result['valid'] = False
-            result['errors'].append('目標リターンは100%以下を指定してください')
+            result['errors'].append(_('Target return must be 100% or lower'))
         
         # 警告レベルのチェック
         if target_return > 0.3:  # 30%超
-            result['warnings'].append('目標リターンが非常に高く設定されています')
+            result['warnings'].append(_('Target return is set very high'))
             
         if target_return < -0.2:  # -20%未満
-            result['warnings'].append('目標リターンが非常に低く設定されています')
+            result['warnings'].append(_('Target return is set very low'))
         
         return result
     
@@ -161,11 +162,11 @@ class InputValidator:
         # 範囲チェック (0% ~ 10%)
         if risk_free_rate < 0:
             result['valid'] = False
-            result['errors'].append('無リスク金利は0%以上を指定してください')
+            result['errors'].append(_('Risk-free rate must be 0% or higher'))
             
         if risk_free_rate > 0.1:
             result['valid'] = False
-            result['errors'].append('無リスク金利は10%以下を指定してください')
+            result['errors'].append(_('Risk-free rate must be 10% or lower'))
         
         return result
     
@@ -188,15 +189,15 @@ class InputValidator:
         # 範囲チェック
         if simulation_count < self.config.MIN_SIMULATION_COUNT:
             result['valid'] = False
-            result['errors'].append(f'シミュレーション回数は最低{self.config.MIN_SIMULATION_COUNT:,}回必要です')
+            result['errors'].append(_('Simulation count must be at least %s') % f'{self.config.MIN_SIMULATION_COUNT:,}')
             
         if simulation_count > self.config.MAX_SIMULATION_COUNT:
             result['valid'] = False
-            result['errors'].append(f'シミュレーション回数は最大{self.config.MAX_SIMULATION_COUNT:,}回まで可能です')
+            result['errors'].append(_('Simulation count cannot exceed %s') % f'{self.config.MAX_SIMULATION_COUNT:,}')
         
         # パフォーマンス警告
         if simulation_count > 30000:
-            result['warnings'].append('シミュレーション回数が多いため、計算に時間がかかる可能性があります')
+            result['warnings'].append(_('High simulation count may result in longer calculation time'))
         
         return result
     
@@ -228,7 +229,7 @@ class InputValidator:
         for field in required_fields:
             if field not in inputs or not inputs[field]:
                 result['valid'] = False
-                result['errors'].append(f'{field} は必須項目です')
+                result['errors'].append(_('%s is required') % field)
         
         if not result['valid']:
             return result

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="{% if session.language == 'ja' %}ja{% else %}en{% endif %}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ポートフォリオ最適化アプリ{% endblock %}</title>
+    <title>{% block title %}{{ _('Portfolio Optimization App') }}{% endblock %}</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -21,23 +21,32 @@
     <!-- ナビゲーションバー -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('main.index') }}">
+            <a class="navbar-brand" href="{{ url_for('main.index_lang', lang=session.language or 'en') }}">
                 <i class="bi bi-graph-up-arrow me-2"></i>
-                ポートフォリオ最適化
+                {{ _('Portfolio Optimization App') }}
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-globe me-1"></i>{% if session.language == 'ja' %}日本語{% else %}English{% endif %}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('main.index_lang', lang='en') }}">English</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('main.index_lang', lang='ja') }}">日本語</a></li>
+                        </ul>
+                    </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.index') }}">
-                            <i class="bi bi-house me-1"></i>ホーム
+                        <a class="nav-link" href="{{ url_for('main.index_lang', lang=session.language or 'en') }}">
+                            <i class="bi bi-house me-1"></i>{{ _('Home') if _('Home') != 'Home' else 'ホーム' if session.language == 'ja' else 'Home' }}
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#" onclick="showHelp()">
-                            <i class="bi bi-question-circle me-1"></i>ヘルプ
+                            <i class="bi bi-question-circle me-1"></i>{{ _('Help') if _('Help') != 'Help' else 'ヘルプ' if session.language == 'ja' else 'Help' }}
                         </a>
                     </li>
                 </ul>
@@ -58,7 +67,7 @@
                 <br>
                 <span class="text-warning">
                     <i class="bi bi-exclamation-triangle me-1"></i>
-                    投資判断は自己責任で行ってください。本アプリの計算結果は参考情報です。
+                    {{ _('Please make investment decisions at your own risk. The calculation results provided by this application are for reference purposes only.') }}
                 </span>
             </small>
         </div>
@@ -70,7 +79,8 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="bi bi-hourglass-split me-2"></i>処理中
+                        <i class="bi bi-hourglass-split me-2"></i>
+                        {{ _('Processing...') }}
                     </h5>
                 </div>
                 <div class="modal-body">
@@ -78,7 +88,7 @@
                         <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
                              role="progressbar" style="width: 0%"></div>
                     </div>
-                    <p id="progressMessage" class="text-center mb-0">処理を開始しています...</p>
+                    <p id="progressMessage" class="text-center mb-0">{{ _('Starting process...') }}</p>
                 </div>
             </div>
         </div>
@@ -90,7 +100,7 @@
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title">
-                        <i class="bi bi-exclamation-triangle me-2"></i>エラー
+                        <i class="bi bi-exclamation-triangle me-2"></i>{{ _('Error') }}
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -98,7 +108,7 @@
                     <p id="errorMessage"></p>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
                 </div>
             </div>
         </div>
@@ -110,41 +120,41 @@
             <div class="modal-content">
                 <div class="modal-header bg-info text-white">
                     <h5 class="modal-title">
-                        <i class="bi bi-question-circle me-2"></i>使い方ガイド
+                        <i class="bi bi-question-circle me-2"></i>{{ _('User Guide') }}
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6><i class="bi bi-1-circle text-primary me-2"></i>ティッカーシンボル入力</h6>
-                            <p class="small">分析したい銘柄のティッカーシンボルを入力してください（例: AAPL, 7203.T, MSFT）</p>
+                            <h6><i class="bi bi-1-circle text-primary me-2"></i>{{ _('Ticker Symbol Input') }}</h6>
+                            <p class="small">{{ _('Enter ticker symbols for the stocks you want to analyze (e.g., AAPL, 7203.T, MSFT)') }}</p>
                             
-                            <h6><i class="bi bi-2-circle text-primary me-2"></i>期間設定</h6>
-                            <p class="small">データ取得期間を設定してください（最低1年、最大10年）</p>
+                            <h6><i class="bi bi-2-circle text-primary me-2"></i>{{ _('Period Setting') }}</h6>
+                            <p class="small">{{ _('Set the data collection period (minimum 1 year, maximum 10 years)') }}</p>
                             
-                            <h6><i class="bi bi-3-circle text-primary me-2"></i>パラメータ調整</h6>
-                            <p class="small">無リスク金利やシミュレーション回数を必要に応じて調整できます</p>
+                            <h6><i class="bi bi-3-circle text-primary me-2"></i>{{ _('Parameter Adjustment') }}</h6>
+                            <p class="small">{{ _('Adjust risk-free rate and number of simulations as needed') }}</p>
                         </div>
                         <div class="col-md-6">
-                            <h6><i class="bi bi-4-circle text-success me-2"></i>分析実行</h6>
-                            <p class="small">「分析開始」ボタンで処理を開始します</p>
+                            <h6><i class="bi bi-4-circle text-success me-2"></i>{{ _('Run Analysis') }}</h6>
+                            <p class="small">{{ _('Click the "Start Analysis" button to begin processing') }}</p>
                             
-                            <h6><i class="bi bi-5-circle text-success me-2"></i>結果確認</h6>
-                            <p class="small">効率的フロンティア、最適ポートフォリオ、資産配分などの結果を確認できます</p>
+                            <h6><i class="bi bi-5-circle text-success me-2"></i>{{ _('View Results') }}</h6>
+                            <p class="small">{{ _('Review efficient frontier, optimal portfolios, asset allocation, and other results') }}</p>
                             
-                            <h6><i class="bi bi-6-circle text-success me-2"></i>出力・保存</h6>
-                            <p class="small">結果はJSON形式でエクスポート可能です</p>
+                            <h6><i class="bi bi-6-circle text-success me-2"></i>{{ _('Export & Save') }}</h6>
+                            <p class="small">{{ _('Results can be exported in JSON format') }}</p>
                         </div>
                     </div>
                     <hr>
                     <div class="alert alert-warning">
                         <small>
-                            <strong>注意事項:</strong>
+                            <strong>{{ _('Important Notes:') }}</strong>
                             <ul class="mb-0">
-                                <li>本アプリは情報提供目的のみです</li>
-                                <li>投資判断は自己責任で行ってください</li>
-                                <li>過去のデータに基づく分析であり、将来の結果を保証するものではありません</li>
+                                <li>{{ _('This app is for informational purposes only') }}</li>
+                                <li>{{ _('Please make investment decisions at your own risk') }}</li>
+                                <li>{{ _('Analysis is based on historical data and does not guarantee future results') }}</li>
                             </ul>
                         </small>
                     </div>
@@ -162,6 +172,50 @@
     {% block extra_scripts %}{% endblock %}
     
     <script>
+        // Inject translations from Flask-Babel into JavaScript
+        window.translations = {
+            'Return Statistics': '{{ _("Return Statistics") }}',
+            'Risk Statistics': '{{ _("Risk Statistics") }}',
+            'Sharpe Ratio Statistics': '{{ _("Sharpe Ratio Statistics") }}',
+            'Mean': '{{ _("Mean") }}',
+            'Std Dev': '{{ _("Std Dev") }}',
+            'Min': '{{ _("Min") }}',
+            'Max': '{{ _("Max") }}',
+            'Median': '{{ _("Median") }}',
+            '95% Confidence Interval': '{{ _("95% Confidence Interval") }}',
+            '99% Confidence Interval': '{{ _("99% Confidence Interval") }}',
+            'Confidence intervals show the range containing 95%/99% of simulation results': '{{ _("Confidence intervals show the range containing 95%%/99%% of simulation results") }}',
+            'Return VaR': '{{ _("Return VaR") }}',
+            'Risk VaR': '{{ _("Risk VaR") }}',
+            '95% VaR': '{{ _("95% VaR") }}',
+            '99% VaR': '{{ _("99% VaR") }}',
+            '95% Upper': '{{ _("95% Upper") }}',
+            '99% Upper': '{{ _("99% Upper") }}',
+            'VaR indicates the maximum expected loss at the specified confidence level': '{{ _("VaR indicates the maximum expected loss at the specified confidence level") }}',
+            'Failed to calculate optimal portfolio': '{{ _("Failed to calculate optimal portfolio") }}',
+            'Expected Return': '{{ _("Expected Return") }}',
+            'Optimal Portfolio': '{{ _("Optimal Portfolio") }}',
+            'Risk': '{{ _("Risk") }}',
+            'Annual Standard Deviation': '{{ _("Annual Standard Deviation") }}',
+            'Sharpe Ratio': '{{ _("Sharpe Ratio") }}',
+            'Risk-adjusted Return': '{{ _("Risk-adjusted Return") }}',
+            'Simulations': '{{ _("Simulations") }}',
+            'Execution Count': '{{ _("Execution Count") }}',
+            'Portfolios Above Risk-Free Rate': '{{ _("Portfolios Above Risk-Free Rate") }}',
+            'Positive Sharpe Ratio': '{{ _("Positive Sharpe Ratio") }}',
+            'Best Sharpe Ratio': '{{ _("Best Sharpe Ratio") }}',
+            'Minimum Risk': '{{ _("Minimum Risk") }}',
+            'VaR (95%)': '{{ _("VaR (95%)") }}',
+            'No data': '{{ _("No data") }}',
+            'Return': '{{ _("Return") }}',
+            'Risk (Standard Deviation)': '{{ _("Risk (Standard Deviation)") }}'
+        };
+
+        // JavaScript translation function
+        function _(key) {
+            return (window.translations && window.translations[key]) || key;
+        }
+
         // グローバル関数
         function showHelp() {
             const helpModal = new bootstrap.Modal(document.getElementById('helpModal'));
@@ -174,7 +228,9 @@
             errorModal.show();
         }
         
-        function showProgress(message = '処理中...', progress = 0) {
+        function showProgress(message, progress) {
+            message = message || '{{ _("Processing...") }}';
+            progress = progress || 0;
             document.getElementById('progressMessage').textContent = message;
             document.getElementById('progressBar').style.width = progress + '%';
             const progressModal = new bootstrap.Modal(document.getElementById('progressModal'));

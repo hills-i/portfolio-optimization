@@ -15,7 +15,7 @@ class Config:
     DATA_FETCH_TIMEOUT = 30  # 30秒
     
     # 計算設定
-    DEFAULT_RISK_FREE_RATE = 0.005  # 0.5% (日本国債10年物の参考値)
+    DEFAULT_RISK_FREE_RATE = 0.01  # 0.5% (日本国債10年物の参考値)
     DEFAULT_SIMULATION_COUNT = 10000
     MIN_SIMULATION_COUNT = 1000
     MAX_SIMULATION_COUNT = 50000

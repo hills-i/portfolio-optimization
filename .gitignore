@@ -49,5 +49,9 @@ visualize_result.json
 src/analyze_result.json
 src/visualize_result.json
 
+# Translation files - exclude compiled and generated files
+*.mo
+messages.pot
+
 CLAUDE.md
 

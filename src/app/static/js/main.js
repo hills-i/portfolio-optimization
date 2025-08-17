@@ -1,10 +1,25 @@
-// メインJavaScript - 共通機能
+// Main JavaScript - Common functionality
 
-// グローバル変数
+// Global variables
 let currentResults = null;
 let tickerCount = 0;
+let currentLanguage = 'en'; // Default language
 
-// アプリケーション初期化
+// Get current language from URL or session
+function getCurrentLanguage() {
+    const pathParts = window.location.pathname.split('/');
+    if (pathParts.length > 1 && (pathParts[1] === 'en' || pathParts[1] === 'ja')) {
+        return pathParts[1];
+    }
+    return 'en'; // Default to English
+}
+
+// Set current language on page load
+document.addEventListener('DOMContentLoaded', function() {
+    currentLanguage = getCurrentLanguage();
+});
+
+// Application initialization
 function initializeApp() {
     setupDateDefaults();
     setupRangeSliders();
@@ -13,19 +28,19 @@ function initializeApp() {
     setupFormValidation();
 }
 
-// 日付のデフォルト値設定
+// Set date default values
 function setupDateDefaults() {
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setFullYear(endDate.getFullYear() - 3); // 3年前をデフォルト
+    startDate.setFullYear(endDate.getFullYear() - 3); // Default to 3 years ago
 
     document.getElementById('endDate').valueAsDate = endDate;
     document.getElementById('startDate').valueAsDate = startDate;
 }
 
-// レンジスライダーの設定
+// Range slider configuration
 function setupRangeSliders() {
-    // 無リスク金利
+    // Risk-free rate
     const riskFreeRateRange = document.getElementById('riskFreeRateRange');
     const riskFreeRateValue = document.getElementById('riskFreeRateValue');
     const riskFreeRate = document.getElementById('riskFreeRate');
@@ -33,10 +48,10 @@ function setupRangeSliders() {
     riskFreeRateRange.addEventListener('input', function() {
         const value = this.value;
         riskFreeRateValue.textContent = value;
-        riskFreeRate.value = (value / 100).toString(); // パーセントを小数に変換
+        riskFreeRate.value = (value / 100).toString(); // Convert percentage to decimal
     });
 
-    // 目標リターン
+    // Target return
     const targetReturnRange = document.getElementById('targetReturnRange');
     const targetReturnValue = document.getElementById('targetReturnValue');
     const targetReturn = document.getElementById('targetReturn');
@@ -44,10 +59,10 @@ function setupRangeSliders() {
     targetReturnRange.addEventListener('input', function() {
         const value = this.value;
         targetReturnValue.textContent = value;
-        targetReturn.value = (value / 100).toString(); // パーセントを小数に変換
+        targetReturn.value = (value / 100).toString(); // Convert percentage to decimal
     });
 
-    // 目標リターンの有効/無効切り替え
+    // Enable/disable target return toggle
     document.getElementById('enableTargetReturn').addEventListener('change', function() {
         const targetReturnGroup = document.getElementById('targetReturnGroup');
         if (this.checked) {
@@ -57,7 +72,7 @@ function setupRangeSliders() {
         }
     });
 
-    // シミュレーション回数
+    // Simulation count
     const simulationCountRange = document.getElementById('simulationCountRange');
     const simulationCountValue = document.getElementById('simulationCountValue');
     const simulationCount = document.getElementById('simulationCount');
@@ -69,7 +84,7 @@ function setupRangeSliders() {
     });
 }
 
-// ツールチップの設定
+// Tooltip configuration
 function setupTooltips() {
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -77,17 +92,17 @@ function setupTooltips() {
     });
 }
 
-// 初期ティッカー入力フィールドを追加
+// Add initial ticker input fields
 function addInitialTickers() {
     addTickerInput('AAPL');
     addTickerInput('MSFT');
     addTickerInput('GOOGL');
 }
 
-// ティッカー入力フィールドを追加
+// Add ticker input field
 function addTickerInput(defaultValue = '') {
     if (tickerCount >= 20) {
-        showError('最大20銘柄まで入力可能です');
+        showError('Maximum 20 assets can be entered');
         return;
     }
 
@@ -100,12 +115,12 @@ function addTickerInput(defaultValue = '') {
         <input type="text" 
                class="form-control ticker-field" 
                name="ticker_${tickerCount}" 
-               placeholder="例: AAPL" 
+               placeholder="e.g. AAPL" 
                value="${defaultValue}"
                maxlength="10"
                style="text-transform: uppercase;">
         <div class="ticker-validation-icon">
-            <!-- バリデーション結果のアイコン -->
+            <!-- Validation result icon -->
         </div>
         <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeTickerInput(this)">
             <i class="bi bi-trash"></i>
@@ -114,7 +129,7 @@ function addTickerInput(defaultValue = '') {
     
     tickerInputs.appendChild(inputGroup);
     
-    // リアルタイムバリデーション
+    // Real-time validation
     const input = inputGroup.querySelector('input');
     input.addEventListener('input', function() {
         validateTicker(this);
@@ -124,14 +139,14 @@ function addTickerInput(defaultValue = '') {
         validateTickerExists(this);
     });
 
-    // 最低2銘柄になったら削除ボタンを有効化
+    // Enable remove buttons when there are at least 2 assets
     updateRemoveButtons();
 }
 
-// ティッカー入力フィールドを削除
+// Remove ticker input field
 function removeTickerInput(button) {
     if (tickerCount <= 2) {
-        showError('最低2銘柄が必要です');
+        showError('At least 2 assets are required');
         return;
     }
     
@@ -140,7 +155,7 @@ function removeTickerInput(button) {
     updateRemoveButtons();
 }
 
-// 削除ボタンの有効/無効を更新
+// Update enable/disable state of remove buttons
 function updateRemoveButtons() {
     const removeButtons = document.querySelectorAll('.ticker-input button');
     removeButtons.forEach(button => {
@@ -148,7 +163,7 @@ function updateRemoveButtons() {
     });
 }
 
-// ティッカーの形式バリデーション
+// Ticker format validation
 function validateTicker(input) {
     const ticker = input.value.trim().toUpperCase();
     const icon = input.nextElementSibling;
@@ -159,7 +174,7 @@ function validateTicker(input) {
         return false;
     }
     
-    // 基本的な形式チェック（英数字、ドット、ハイフン）
+    // Basic format check (alphanumeric, dots, hyphens)
     const tickerPattern = /^[A-Z0-9\.\-]{1,10}$/;
     
     if (tickerPattern.test(ticker)) {
@@ -175,7 +190,7 @@ function validateTicker(input) {
     }
 }
 
-// ティッカーの存在確認（API呼び出し）
+// Ticker existence validation (API call)
 async function validateTickerExists(input) {
     const ticker = input.value.trim().toUpperCase();
     if (!ticker || !validateTicker(input)) return;
@@ -189,7 +204,7 @@ async function validateTickerExists(input) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ tickers: [ticker] })
+            body: JSON.stringify({ tickers: [ticker], language: currentLanguage })
         });
         
         const result = await response.json();
@@ -209,13 +224,13 @@ async function validateTickerExists(input) {
     }
 }
 
-// フォームバリデーションの設定
+// Form validation setup
 function setupFormValidation() {
     const form = document.getElementById('portfolioForm');
     form.addEventListener('submit', handleFormSubmit);
 }
 
-// フォーム送信処理
+// Form submission processing
 async function handleFormSubmit(event) {
     event.preventDefault();
     
@@ -223,7 +238,7 @@ async function handleFormSubmit(event) {
         return;
     }
     
-    // 分析開始時にプレースホルダーを非表示
+    // Hide placeholder when analysis starts
     const placeholderArea = document.getElementById('placeholderArea');
     placeholderArea.classList.remove('d-flex');
     placeholderArea.style.display = 'none';
@@ -232,40 +247,40 @@ async function handleFormSubmit(event) {
     await performAnalysis(formData);
 }
 
-// フォーム全体のバリデーション
+// Overall form validation
 function validateForm() {
     let isValid = true;
     const errors = [];
     
-    // ティッカーの検証
+    // Ticker validation
     const tickers = getTickers();
     if (tickers.length < 2) {
-        errors.push('最低2銘柄が必要です');
+        errors.push('At least 2 assets are required');
         isValid = false;
     } else if (tickers.length > 20) {
-        errors.push('最大20銘柄まで入力可能です');
+        errors.push('Maximum 20 assets can be entered');
         isValid = false;
     }
     
-    // 重複チェック
+    // Duplicate check
     const uniqueTickers = [...new Set(tickers)];
     if (uniqueTickers.length !== tickers.length) {
-        errors.push('重複するティッカーシンボルがあります');
+        errors.push('Duplicate ticker symbols found');
         isValid = false;
     }
     
-    // 日付の検証
+    // Date validation
     const startDate = new Date(document.getElementById('startDate').value);
     const endDate = new Date(document.getElementById('endDate').value);
     const today = new Date();
     
     if (startDate >= endDate) {
-        errors.push('開始日は終了日より前の日付を指定してください');
+        errors.push('Start date must be before end date');
         isValid = false;
     }
     
     if (endDate > today) {
-        errors.push('終了日に未来の日付は指定できません');
+        errors.push('End date cannot be in the future');
         isValid = false;
     }
     
@@ -273,21 +288,21 @@ function validateForm() {
     const diffYears = diffTime / (1000 * 60 * 60 * 24 * 365);
     
     if (diffYears < 1) {
-        errors.push('分析期間は最低1年必要です');
+        errors.push('Analysis period must be at least 1 year');
         isValid = false;
     } else if (diffYears > 10) {
-        errors.push('分析期間は最大10年まで可能です');
+        errors.push('Analysis period can be up to 10 years');
         isValid = false;
     }
     
     if (!isValid) {
-        showError('入力エラー: ' + errors.join(', '));
+        showError('Input Error: ' + errors.join(', '));
     }
     
     return isValid;
 }
 
-// ティッカーリストを取得
+// Get ticker list
 function getTickers() {
     const inputs = document.querySelectorAll('.ticker-field');
     const tickers = [];
@@ -302,7 +317,12 @@ function getTickers() {
     return tickers;
 }
 
-// フォームデータを取得
+// Get selected tickers (compatibility function for portfolio.js)
+function getSelectedTickers() {
+    return getTickers();
+}
+
+// Get form data
 function getFormData() {
     const data = {
         tickers: getTickers(),
@@ -312,7 +332,7 @@ function getFormData() {
         simulation_count: parseInt(document.getElementById('simulationCount').value)
     };
     
-    // 目標リターンが有効な場合
+    // When target return is enabled
     if (document.getElementById('enableTargetReturn').checked) {
         data.target_return = parseFloat(document.getElementById('targetReturn').value);
     }
@@ -320,38 +340,38 @@ function getFormData() {
     return data;
 }
 
-// ポートフォリオ分析実行
+// Execute portfolio analysis
 async function performAnalysis(formData) {
     try {
-        showProgress('分析を開始しています...', 0);
+        showProgress('Starting analysis...', 0);
         
         const response = await fetch('/api/analyze', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(formData)
+            body: JSON.stringify({...formData, language: currentLanguage})
         });
         
-        updateProgress('データを処理中...', 50);
+        updateProgress('Processing data...', 50);
         
         const result = await response.json();
         
         if (!response.ok) {
-            const errorMsg = result.error || 'サーバーエラーが発生しました';
-            const details = result.details ? ` (詳細: ${result.details})` : '';
+            const errorMsg = result.error || 'Server error occurred';
+            const details = result.details ? ` (Details: ${result.details})` : '';
             throw new Error(errorMsg + details);
         }
         
-        updateProgress('結果を表示中...', 80);
+        updateProgress('Displaying results...', 80);
         
-        // 結果を保存
+        // Save results
         currentResults = result;
         
-        // 結果表示
+        // Display results
         await displayResults(result);
         
-        updateProgress('完了', 100);
+        updateProgress('Complete', 100);
         
         setTimeout(() => {
             hideProgress();
@@ -360,8 +380,8 @@ async function performAnalysis(formData) {
     } catch (error) {
         hideProgress();
         console.error('Analysis error:', error);
-        showError('分析中にエラーが発生しました: ' + error.message);
-        // プレースホルダーは再表示しない（結果エリアがある場合）
+        showError('An error occurred during analysis: ' + error.message);
+        // Don't re-show placeholder if results area exists
         if (!document.getElementById('resultsArea').classList.contains('show')) {
             const placeholderArea = document.getElementById('placeholderArea');
             placeholderArea.classList.add('d-flex');
@@ -370,73 +390,76 @@ async function performAnalysis(formData) {
     }
 }
 
-// 結果の表示
+// Display results
 async function displayResults(results) {
-    // 警告メッセージの表示
+    // Display warning messages
     if (results.warnings && results.warnings.length > 0) {
         showWarnings(results.warnings);
     }
     
-    // サマリーカードの更新
+    // Update summary cards
     updateSummaryCards(results);
     
-    // 分析時刻の表示
+    // Display analysis time
     document.getElementById('analysisTime').textContent = 
-        '分析実行: ' + new Date().toLocaleString('ja-JP');
+        'Analysis completed: ' + new Date().toLocaleString();
     
-    // グラフの生成と表示
+    // Generate and display charts
     await generateCharts(results);
     
-    // データテーブルの更新
+    // Update data tables
     updateDataTables(results);
     
-    // 結果エリアを表示
+    // Display simulation details
+    displaySimulationDetails(results);
+    
+    // Show results area
     document.getElementById('resultsArea').classList.add('show');
     
-    // 結果エリアまでスクロール
+    // Scroll to results area
     document.getElementById('resultsArea').scrollIntoView({ 
         behavior: 'smooth',
         block: 'start'
     });
 }
 
-// 警告メッセージの表示
+// Display warning messages
 function showWarnings(warnings) {
     warnings.forEach(warning => {
         console.warn('Warning:', warning);
     });
     
-    // TODO: 警告メッセージのUIを実装
+    // TODO: Implement warning message UI
 }
 
-// フォームのリセット
+// Reset form
 function resetForm() {
     document.getElementById('portfolioForm').reset();
     
-    // ティッカー入力をクリア
+    // Clear ticker inputs
     document.getElementById('tickerInputs').innerHTML = '';
     tickerCount = 0;
     
-    // 結果エリアを隠す
+    // Hide results area
     document.getElementById('resultsArea').classList.remove('show');
     const placeholderArea = document.getElementById('placeholderArea');
     placeholderArea.classList.add('d-flex');
     placeholderArea.style.display = 'flex';
     
-    // デフォルト値を再設定
+    // Reset default values
     setupDateDefaults();
     addInitialTickers();
     
-    // バリデーションクラスをクリア
+    // Clear validation classes
     document.querySelectorAll('.is-valid, .is-invalid').forEach(el => {
         el.classList.remove('is-valid', 'is-invalid');
     });
 }
 
-// 結果のエクスポート
+// Export results
 async function exportResults(format = 'json') {
     if (!currentResults) {
-        showError('エクスポートする結果がありません');
+        showError('No results to export');
         return;
     }
     
@@ -448,14 +471,15 @@ async function exportResults(format = 'json') {
             },
             body: JSON.stringify({
                 format: format,
-                results: currentResults
+                results: currentResults,
+                language: currentLanguage
             })
         });
         
         const result = await response.json();
         
         if (response.ok) {
-            // ファイルダウンロード
+            // File download
             const blob = new Blob([JSON.stringify(result.data, null, 2)], {
                 type: 'application/json'
             });
@@ -474,11 +498,11 @@ async function exportResults(format = 'json') {
         
     } catch (error) {
         console.error('Export error:', error);
-        showError('エクスポート中にエラーが発生しました: ' + error.message);
+        showError('An error occurred during export: ' + error.message);
     }
 }
 
-// 数値フォーマット関数
+// Number formatting functions
 function formatPercent(value, decimals = 2) {
     return (value * 100).toFixed(decimals) + '%';
 }

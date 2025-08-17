@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from typing import Dict, List, Any, Optional
 import json
+from flask_babel import gettext as _
 
 class PortfolioVisualizer:
     """ポートフォリオ可視化クラス"""
@@ -55,13 +56,13 @@ class PortfolioVisualizer:
                 color=mc_df['sharpe_ratio'],
                 colorscale='Viridis',
                 opacity=0.6,
-                colorbar=dict(title="シャープレシオ"),
+                colorbar=dict(title=_('Sharpe Ratio')),
                 showscale=True
             ),
-            name='モンテカルロシミュレーション',
-            hovertemplate='<b>リスク:</b> %{x:.3f}<br>' +
-                         '<b>リターン:</b> %{y:.3f}<br>' +
-                         '<b>シャープレシオ:</b> %{marker.color:.3f}<extra></extra>'
+            name=_('Monte Carlo Simulation'),
+            hovertemplate='<b>' + _('Risk') + ':</b> %{x:.3f}<br>' +
+                         '<b>' + _('Return') + ':</b> %{y:.3f}<br>' +
+                         '<b>' + _('Sharpe Ratio') + ':</b> %{marker.color:.3f}<extra></extra>'
         ))
         
         # 効率的フロンティア
@@ -73,9 +74,9 @@ class PortfolioVisualizer:
                 y=ef_df['expected_return'],
                 mode='lines',
                 line=dict(color=self.COLORS['danger'], width=3),
-                name='効率的フロンティア',
-                hovertemplate='<b>リスク:</b> %{x:.3f}<br>' +
-                             '<b>リターン:</b> %{y:.3f}<extra></extra>'
+                name=_('Efficient Frontier'),
+                hovertemplate='<b>' + _('Risk') + ':</b> %{x:.3f}<br>' +
+                             '<b>' + _('Return') + ':</b> %{y:.3f}<extra></extra>'
             ))
         
         # 最適ポートフォリオのマーカー
@@ -90,9 +91,9 @@ class PortfolioVisualizer:
                 marker = marker_config.get(name, dict(symbol='circle', color=self.COLORS['primary'], size=10))
                 
                 display_names = {
-                    'max_sharpe': '最大シャープレシオ',
-                    'min_variance': '最小分散',
-                    'target_return': '目標リターン達成'
+                    'max_sharpe': _('Maximum Sharpe Ratio'),
+                    'min_variance': _('Minimum Variance'),
+                    'target_return': _('Target Return Achievement')
                 }
                 
                 fig.add_trace(go.Scatter(
@@ -102,22 +103,22 @@ class PortfolioVisualizer:
                     marker=marker,
                     name=display_names.get(name, name),
                     hovertemplate=f'<b>{display_names.get(name, name)}</b><br>' +
-                                 '<b>リスク:</b> %{x:.3f}<br>' +
-                                 '<b>リターン:</b> %{y:.3f}<br>' +
-                                 f'<b>シャープレシオ:</b> {portfolio["metrics"]["sharpe_ratio"]:.3f}<extra></extra>'
+                                 '<b>' + _('Risk') + ':</b> %{x:.3f}<br>' +
+                                 '<b>' + _('Return') + ':</b> %{y:.3f}<br>' +
+                                 f'<b>' + _('Sharpe Ratio') + ':</b> {portfolio["metrics"]["sharpe_ratio"]:.3f}<extra></extra>'
                 ))
         
         # レイアウト設定
         fig.update_layout(
             title=dict(
-                text='効率的フロンティア',
+                text=_('Efficient Frontier'),
                 font=dict(size=16, **self.font_config)
             ),
             xaxis=dict(
-                title='リスク（標準偏差）'
+                title=_('Risk (Standard Deviation)')
             ),
             yaxis=dict(
-                title='期待リターン'
+                title=_('Expected Return')
             ),
             template='plotly_white',
             showlegend=True,
@@ -126,7 +127,7 @@ class PortfolioVisualizer:
         
         return fig.to_json()
     
-    def create_asset_allocation_plot(self, weights: Dict[str, float], title: str = "資産配分") -> str:
+    def create_asset_allocation_plot(self, weights: Dict[str, float], title: str = None) -> str:
         """
         資産配分の円グラフ作成
         
@@ -137,13 +138,28 @@ class PortfolioVisualizer:
         Returns:
             str: Plotly図表のJSON文字列
         """
-        # 重みが0.01未満の資産は「その他」にまとめる
-        threshold = 0.01
+        # デバッグ用ログ
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Creating allocation plot: {title}")
+        logger.info(f"Input weights: {weights}")
+        
+        # 重みの合計をチェック
+        total_weight = sum(weights.values()) if weights else 0
+        logger.info(f"Total weight: {total_weight}")
+        
+        if not weights or total_weight <= 0:
+            logger.warning("Invalid weights provided for allocation chart")
+            # 空のデータの場合のフォールバック
+            weights = {_('No Data'): 1.0}
+        # 重みが0.005未満（0.5%未満）の資産は「その他」にまとめる
+        threshold = 0.005
         main_assets = {k: v for k, v in weights.items() if v >= threshold}
         other_assets = {k: v for k, v in weights.items() if v < threshold}
         
-        if other_assets:
-            main_assets['その他'] = sum(other_assets.values())
+        # 「その他」の合計が意味のある値の場合のみ追加
+        if other_assets and sum(other_assets.values()) >= 0.001:  # 0.1%以上の場合のみ
+            main_assets[_('Others')] = sum(other_assets.values())
         
         assets = list(main_assets.keys())
         values = list(main_assets.values())
@@ -155,26 +171,40 @@ class PortfolioVisualizer:
         fig = go.Figure(data=[go.Pie(
             labels=assets,
             values=percentages,
-            hole=0.4,
-            marker=dict(colors=colors),
+            hole=0.3,
+            marker=dict(colors=colors, line=dict(color='white', width=2)),
             textinfo='label+percent',
-            textfont=dict(size=10),
+            textfont=dict(size=11, color='white'),
+            textposition='inside',
+            pull=0.05,  # 少し分離して見やすく
             hovertemplate='<b>%{label}</b><br>' +
-                         '配分: %{percent}<br>' +
-                         '重み: %{value:.2f}%<extra></extra>'
+                         _('Allocation') + ': %{percent}<br>' +
+                         _('Weight') + ': %{value:.2f}%<extra></extra>'
         )])
         
+        # Set default title if none provided
+        if title is None:
+            title = _('Asset Allocation')
+            
         fig.update_layout(
             title=dict(
                 text=title,
                 font=dict(size=16, **self.font_config),
-                x=0.5
+                x=0.5,
+                y=0.95
             ),
             template='plotly_white',
             showlegend=True,
             legend=dict(
-                font=dict(size=10)
-            )
+                font=dict(size=11),
+                orientation="v",
+                x=1.02,
+                y=0.5
+            ),
+            margin=dict(l=20, r=100, t=60, b=20),
+            width=400,
+            height=380,
+            autosize=False
         )
         
         return fig.to_json()
@@ -212,15 +242,15 @@ class PortfolioVisualizer:
             zmin=-1,
             zmax=1,
             showscale=True,
-            colorbar=dict(title="相関係数"),
+            colorbar=dict(title=_('Correlation Coefficient')),
             text=text_values,
             texttemplate='%{text}',
             textfont=dict(size=12, color='white'),
-            hovertemplate='<b>%{y} vs %{x}</b><br>相関係数: %{z:.3f}<extra></extra>'
+            hovertemplate='<b>%{y} vs %{x}</b><br>' + _('Correlation Coefficient') + ': %{z:.3f}<extra></extra>'
         ))
         
         fig.update_layout(
-            title=dict(text='資産間相関行列', font=dict(size=16)),
+            title=dict(text=_('Asset Correlation Matrix'), font=dict(size=16)),
             xaxis=dict(title='', side='bottom'),
             yaxis=dict(title='', autorange='reversed'),
             width=500,
@@ -260,29 +290,29 @@ class PortfolioVisualizer:
                 size=12,
                 color=sharpe_ratios,
                 colorscale='Viridis',
-                colorbar=dict(title="シャープレシオ"),
+                colorbar=dict(title=_('Sharpe Ratio')),
                 showscale=True
             ),
             text=assets,
             textposition='top center',
             textfont=dict(size=10),
-            name='個別資産',
+            name=_('Individual Assets'),
             hovertemplate='<b>%{text}</b><br>' +
-                         'リスク: %{x:.3f}<br>' +
-                         'リターン: %{y:.3f}<br>' +
-                         'シャープレシオ: %{marker.color:.3f}<extra></extra>'
+                         _('Risk') + ': %{x:.3f}<br>' +
+                         _('Return') + ': %{y:.3f}<br>' +
+                         _('Sharpe Ratio') + ': %{marker.color:.3f}<extra></extra>'
         ))
         
         fig.update_layout(
             title=dict(
-                text='個別資産のリスク・リターン特性',
+                text=_('Risk-Return Characteristics of Individual Assets'),
                 font=dict(size=16, **self.font_config)
             ),
             xaxis=dict(
-                title='リスク（標準偏差）',
+                title=_('Risk (Standard Deviation)'),
             ),
             yaxis=dict(
-                title='期待リターン',
+                title=_('Expected Return'),
             ),
             template='plotly_white',
             showlegend=False
@@ -318,19 +348,19 @@ class PortfolioVisualizer:
             text=[f'{c:.1f}%' for c in contributions_sorted],
             textposition='outside',
             hovertemplate='<b>%{x}</b><br>' +
-                         'リスク貢献度: %{y:.1f}%<extra></extra>'
+                         _('Risk Contribution') + ': %{y:.1f}%<extra></extra>'
         ))
         
         fig.update_layout(
             title=dict(
-                text='リスク貢献度分析',
+                text=_('Risk Contribution Analysis'),
                 font=dict(size=16, **self.font_config)
             ),
             xaxis=dict(
-                title='資産',
+                title=_('Assets'),
             ),
             yaxis=dict(
-                title='リスク貢献度（%）',
+                title=_('Risk Contribution (%)'),
             ),
             template='plotly_white',
             showlegend=False
@@ -358,13 +388,34 @@ class PortfolioVisualizer:
                 analysis_results.get('optimal_portfolios')
             )
         
-        # 資産配分（最大シャープレシオポートフォリオ）
-        if 'optimal_portfolios' in analysis_results and 'max_sharpe' in analysis_results['optimal_portfolios']:
-            max_sharpe_weights = analysis_results['optimal_portfolios']['max_sharpe']['weights']
-            charts['asset_allocation'] = self.create_asset_allocation_plot(
-                max_sharpe_weights, 
-                "最適ポートフォリオ資産配分（最大シャープレシオ）"
-            )
+        # 資産配分（全ポートフォリオタイプ）
+        if 'optimal_portfolios' in analysis_results:
+            optimal_portfolios = analysis_results['optimal_portfolios']
+            
+            # 最大シャープレシオ
+            if 'max_sharpe' in optimal_portfolios:
+                charts['asset_allocation_max_sharpe'] = self.create_asset_allocation_plot(
+                    optimal_portfolios['max_sharpe']['weights'], 
+                    _('Optimal Portfolio Asset Allocation (Maximum Sharpe Ratio)')
+                )
+            
+            # 最小分散
+            if 'min_variance' in optimal_portfolios:
+                charts['asset_allocation_min_variance'] = self.create_asset_allocation_plot(
+                    optimal_portfolios['min_variance']['weights'], 
+                    _('Optimal Portfolio Asset Allocation (Minimum Variance)')
+                )
+            
+            # 目標リターン達成
+            if 'target_return' in optimal_portfolios:
+                charts['asset_allocation_target_return'] = self.create_asset_allocation_plot(
+                    optimal_portfolios['target_return']['weights'], 
+                    _('Optimal Portfolio Asset Allocation (Target Return Achievement)')
+                )
+            
+            # 後方互換性のために従来のキーも残す
+            if 'max_sharpe' in optimal_portfolios:
+                charts['asset_allocation'] = charts['asset_allocation_max_sharpe']
         
         # 相関行列
         if 'correlation_matrix' in analysis_results:
@@ -378,13 +429,31 @@ class PortfolioVisualizer:
                 analysis_results['asset_statistics']
             )
         
-        # リスク貢献度
-        if ('optimal_portfolios' in analysis_results and 
-            'max_sharpe' in analysis_results['optimal_portfolios'] and
-            'risk_decomposition' in analysis_results['optimal_portfolios']['max_sharpe']):
+        # リスク貢献度（全ポートフォリオタイプ）
+        if 'optimal_portfolios' in analysis_results:
+            optimal_portfolios = analysis_results['optimal_portfolios']
             
-            charts['risk_contribution'] = self.create_risk_contribution_plot(
-                analysis_results['optimal_portfolios']['max_sharpe']['risk_decomposition']
-            )
+            # 最大シャープレシオのリスク貢献度
+            if ('max_sharpe' in optimal_portfolios and
+                'risk_decomposition' in optimal_portfolios['max_sharpe']):
+                max_sharpe_risk_chart = self.create_risk_contribution_plot(
+                    optimal_portfolios['max_sharpe']['risk_decomposition']
+                )
+                charts['risk_contribution'] = max_sharpe_risk_chart
+                charts['risk_contribution_max_sharpe'] = max_sharpe_risk_chart
+            
+            # 最小分散のリスク貢献度
+            if ('min_variance' in optimal_portfolios and
+                'risk_decomposition' in optimal_portfolios['min_variance']):
+                charts['risk_contribution_min_variance'] = self.create_risk_contribution_plot(
+                    optimal_portfolios['min_variance']['risk_decomposition']
+                )
+            
+            # 目標リターンのリスク貢献度
+            if ('target_return' in optimal_portfolios and
+                'risk_decomposition' in optimal_portfolios['target_return']):
+                charts['risk_contribution_target_return'] = self.create_risk_contribution_plot(
+                    optimal_portfolios['target_return']['risk_decomposition']
+                )
         
         return charts
