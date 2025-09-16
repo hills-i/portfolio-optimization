@@ -32,7 +32,7 @@ function initializeApp() {
 function setupDateDefaults() {
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setFullYear(endDate.getFullYear() - 3); // Default to 3 years ago
+    startDate.setFullYear(endDate.getFullYear() - 30); // Default to 30 years ago
 
     document.getElementById('endDate').valueAsDate = endDate;
     document.getElementById('startDate').valueAsDate = startDate;
@@ -94,9 +94,12 @@ function setupTooltips() {
 
 // Add initial ticker input fields
 function addInitialTickers() {
-    addTickerInput('AAPL');
-    addTickerInput('MSFT');
-    addTickerInput('GOOGL');
+    addTickerInput('SPY');
+    addTickerInput('ACWI');
+    addTickerInput('AGG');
+    addTickerInput('BND');
+    addTickerInput('FRI');
+    addTickerInput('GLD');
 }
 
 // Add ticker input field
@@ -290,8 +293,8 @@ function validateForm() {
     if (diffYears < 1) {
         errors.push('Analysis period must be at least 1 year');
         isValid = false;
-    } else if (diffYears > 10) {
-        errors.push('Analysis period can be up to 10 years');
+    } else if (diffYears > 30) {
+        errors.push('Analysis period can be up to 30 years');
         isValid = false;
     }
     
@@ -360,7 +363,8 @@ async function performAnalysis(formData) {
         if (!response.ok) {
             const errorMsg = result.error || 'Server error occurred';
             const details = result.details ? ` (Details: ${result.details})` : '';
-            throw new Error(errorMsg + details);
+            const errorWarnings = result.validation_errors ? `Validation errors: ${result.validation_errors.join(', ')}` : '';
+            throw new Error(errorMsg + details + errorWarnings);
         }
         
         updateProgress('Displaying results...', 80);

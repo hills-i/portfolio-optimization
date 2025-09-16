@@ -24,7 +24,7 @@ class Config:
     MIN_ASSETS = 2
     MAX_ASSETS = 20
     MIN_ANALYSIS_YEARS = 1
-    MAX_ANALYSIS_YEARS = 10
+    MAX_ANALYSIS_YEARS = 31
 
 class DevelopmentConfig(Config):
     """開発環境設定"""

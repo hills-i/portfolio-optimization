@@ -98,8 +98,8 @@ class InputValidator:
                 result['valid'] = False
                 result['errors'].append(_('End date cannot be in the future'))
             
-            # データ取得可能期間チェック（過去20年程度を想定）
-            min_start_date = today - timedelta(days=20*365)
+            # データ取得可能期間チェック（過去30年程度を想定）
+            min_start_date = today - timedelta(days=31*365)
             if start < min_start_date:
                 result['warnings'].append(_('Start date may be too old. Data may not be available'))
                 
