@@ -1,10 +1,7 @@
 import plotly.graph_objects as go
 import plotly.express as px
-from plotly.subplots import make_subplots
 import pandas as pd
-import numpy as np
 from typing import Dict, List, Any, Optional
-import json
 from flask_babel import gettext as _
 
 class PortfolioVisualizer:
@@ -371,20 +368,29 @@ class PortfolioVisualizer:
     def create_summary_dashboard(self, analysis_results: Dict[str, Any]) -> Dict[str, str]:
         """
         分析結果の総合ダッシュボード作成
-        
+
         Args:
             analysis_results: 分析結果の全データ
-            
+
         Returns:
             Dict[str, str]: 各グラフのJSON文字列
         """
         charts = {}
         
-        # 効率的フロンティア
+        # 効率的フロンティア (モンテカルロベース)
         if 'monte_carlo' in analysis_results and 'efficient_frontier' in analysis_results:
             charts['efficient_frontier'] = self.create_efficient_frontier_plot(
                 analysis_results['monte_carlo']['simulations'],
                 analysis_results['efficient_frontier'],
+                analysis_results.get('optimal_portfolios')
+            )
+
+        # 数理最適化による効率的フロンティア
+        if ('efficient_frontier' in analysis_results and
+            'asset_statistics' in analysis_results):
+            charts['mathematical_efficient_frontier'] = self.create_working_efficient_frontier_plot(
+                analysis_results['efficient_frontier'],
+                analysis_results['asset_statistics'],
                 analysis_results.get('optimal_portfolios')
             )
         
@@ -436,11 +442,11 @@ class PortfolioVisualizer:
             # 最大シャープレシオのリスク貢献度
             if ('max_sharpe' in optimal_portfolios and
                 'risk_decomposition' in optimal_portfolios['max_sharpe']):
-                max_sharpe_risk_chart = self.create_risk_contribution_plot(
+                charts['risk_contribution_max_sharpe'] = self.create_risk_contribution_plot(
                     optimal_portfolios['max_sharpe']['risk_decomposition']
                 )
-                charts['risk_contribution'] = max_sharpe_risk_chart
-                charts['risk_contribution_max_sharpe'] = max_sharpe_risk_chart
+                # 後方互換性のため
+                charts['risk_contribution'] = charts['risk_contribution_max_sharpe']
             
             # 最小分散のリスク貢献度
             if ('min_variance' in optimal_portfolios and
@@ -457,3 +463,201 @@ class PortfolioVisualizer:
                 )
         
         return charts
+
+    def create_working_efficient_frontier_plot(self,
+                                              efficient_frontier_data: List[Dict],
+                                              asset_statistics: Dict[str, Dict[str, float]],
+                                              optimal_portfolios: Optional[Dict] = None) -> str:
+        """
+        効率的フロンティアプロット（線 + 機能）
+
+        Args:
+            efficient_frontier_data: 効率的フロンティアデータ
+            asset_statistics: 個別資産の統計情報
+            optimal_portfolios: 最適ポートフォリオ（任意）
+
+        Returns:
+            str: Plotly図表のJSON文字列
+        """
+        fig = go.Figure()
+
+        # 効率的フロンティア（フィルタリング済みの滑らかな線 + シャープレシオ）
+        if efficient_frontier_data and len(efficient_frontier_data) > 0:
+            ef_df = pd.DataFrame(efficient_frontier_data)
+
+            if 'risk' in ef_df.columns and 'expected_return' in ef_df.columns:
+                # 1. リスクでソート
+                ef_df = ef_df.sort_values('risk').reset_index(drop=True)
+
+                # 2. 効率的フロンティア条件をチェック：リターンが単調増加する部分のみ保持
+                filtered_points = []
+                max_return_so_far = -float('inf')
+
+                for _, row in ef_df.iterrows():
+                    current_return = row['expected_return']
+                    if current_return > max_return_so_far:
+                        max_return_so_far = current_return
+                        filtered_points.append(row.to_dict())
+
+                if len(filtered_points) >= 2:  # 最低2点必要
+                    filtered_df = pd.DataFrame(filtered_points)
+
+                    # 1. 効率的フロンティア線
+                    fig.add_trace(go.Scatter(
+                        x=filtered_df['risk'].tolist(),
+                        y=filtered_df['expected_return'].tolist(),
+                        mode='lines',
+                        line=dict(color='red', width=4),
+                        name='Efficient Frontier',
+                        hovertemplate='Risk: %{x:.4f}<br>Return: %{y:.4f}<extra></extra>'
+                    ))
+
+                    # 2. シャープレシオマーカー（アセット比率表示付き）
+
+                    # カスタムホバーテキストを作成（アセット比率を含む）
+                    hover_texts = []
+                    for _, row in filtered_df.iterrows():
+                        # 基本情報
+                        hover_text = f"<b>Efficient Frontier Point</b><br>"
+                        hover_text += f"Risk: {row['risk']:.4f}<br>"
+                        hover_text += f"Return: {row['expected_return']:.4f}<br>"
+                        hover_text += f"Sharpe Ratio: {row['sharpe_ratio']:.3f}<br>"
+                        hover_text += "<br><b>Asset Allocation:</b><br>"
+
+                        # 各アセットの配分を追加
+                        total_weight = 0
+                        for col in filtered_df.columns:
+                            if col.startswith('weight_'):
+                                asset_name = col.replace('weight_', '')
+                                weight = row[col]
+                                if weight > 0.001:  # 0.1%以上の配分のみ表示
+                                    hover_text += f"{asset_name}: {weight*100:.1f}%<br>"
+                                    total_weight += weight
+
+                        # 少量配分のその他をまとめて表示
+                        if total_weight < 0.999:  # 99.9%未満の場合
+                            hover_text += f"Others: {(1-total_weight)*100:.1f}%<br>"
+
+                        hover_texts.append(hover_text)
+
+                    fig.add_trace(go.Scatter(
+                        x=filtered_df['risk'].tolist(),
+                        y=filtered_df['expected_return'].tolist(),
+                        mode='markers',
+                        marker=dict(
+                            size=8,  # 少し大きくして見やすく
+                            color=filtered_df['sharpe_ratio'].tolist(),
+                            colorscale='Viridis',
+                            colorbar=dict(
+                                title='Sharpe Ratio',
+                                x=1.15,  # 凡例より右に配置
+                                len=0.6,  # 高さを調整
+                                thickness=15  # 幅を調整
+                            ),
+                            showscale=True,
+                            line=dict(width=1, color='white')
+                        ),
+                        name='Frontier Points',
+                        showlegend=False,
+                        text=hover_texts,
+                        hovertemplate='%{text}<extra></extra>'
+                    ))
+
+        # 個別資産
+        if asset_statistics:
+            assets = list(asset_statistics.keys())
+            asset_returns = [asset_statistics[asset]['expected_return'] for asset in assets]
+            asset_risks = [asset_statistics[asset]['risk'] for asset in assets]
+
+            fig.add_trace(go.Scatter(
+                x=asset_risks,
+                y=asset_returns,
+                mode='markers+text',
+                marker=dict(size=12, color='blue', symbol='diamond'),
+                text=assets,
+                textposition='top center',
+                name='Assets'
+            ))
+
+        # 最適ポートフォリオ（全タイプ表示）
+        if optimal_portfolios:
+            portfolio_configs = {
+                'max_sharpe': {
+                    'symbol': 'star',
+                    'color': 'gold',
+                    'size': 20,
+                    'name': 'Max Sharpe Ratio'
+                },
+                'min_variance': {
+                    'symbol': 'square',
+                    'color': 'green',
+                    'size': 16,
+                    'name': 'Min Variance'
+                },
+                'target_return': {
+                    'symbol': 'circle',
+                    'color': 'purple',
+                    'size': 14,
+                    'name': 'Target Return'
+                }
+            }
+
+            for portfolio_type, portfolio in optimal_portfolios.items():
+                if portfolio_type in portfolio_configs:
+                    config = portfolio_configs[portfolio_type]
+
+                    # 最適ポートフォリオのアセット配分ホバーテキストを作成
+                    hover_text = f"<b>{config['name']}</b><br>"
+                    hover_text += f"Risk: {portfolio['metrics']['risk']:.4f}<br>"
+                    hover_text += f"Return: {portfolio['metrics']['expected_return']:.4f}<br>"
+                    hover_text += f"Sharpe Ratio: {portfolio['metrics']['sharpe_ratio']:.3f}<br>"
+                    hover_text += "<br><b>Asset Allocation:</b><br>"
+
+                    # アセット配分を重みでソートして表示
+                    weights = portfolio['weights']
+                    sorted_weights = sorted(weights.items(), key=lambda x: x[1], reverse=True)
+
+                    total_displayed = 0
+                    for asset_name, weight in sorted_weights:
+                        if weight > 0.001:  # 0.1%以上の配分のみ表示
+                            hover_text += f"{asset_name}: {weight*100:.1f}%<br>"
+                            total_displayed += weight
+
+                    # 少量配分のその他をまとめて表示
+                    if total_displayed < 0.999:  # 99.9%未満の場合
+                        hover_text += f"Others: {(1-total_displayed)*100:.1f}%<br>"
+
+                    fig.add_trace(go.Scatter(
+                        x=[portfolio['metrics']['risk']],
+                        y=[portfolio['metrics']['expected_return']],
+                        mode='markers',
+                        marker=dict(
+                            symbol=config['symbol'],
+                            size=config['size'],
+                            color=config['color'],
+                            line=dict(width=2, color='white')
+                        ),
+                        name=config['name'],
+                        text=[hover_text],
+                        hovertemplate='%{text}<extra></extra>'
+                    ))
+
+        fig.update_layout(
+            title='Mathematical Efficient Frontier',
+            xaxis_title='Risk',
+            yaxis_title='Return',
+            template='plotly_white',
+            legend=dict(
+                orientation="v",
+                yanchor="top",
+                y=1,
+                xanchor="left",
+                x=1.02,  # 凡例を右に配置
+                font=dict(size=12)
+            ),
+            margin=dict(l=60, r=200, t=60, b=60),  # 右マージンを大きく
+            width=1000,  # グラフ幅を拡大
+            height=600
+        )
+
+        return fig.to_json()

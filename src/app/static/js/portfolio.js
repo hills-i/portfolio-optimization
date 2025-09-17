@@ -76,8 +76,15 @@ async function generateCharts(results) {
         
         const charts = visualizationResult.charts;
         
-        // Display each chart
-        if (charts.efficient_frontier) {
+        // Display each chart - prioritize mathematical efficient frontier
+        if (charts.mathematical_efficient_frontier) {
+            const frontierData = JSON.parse(charts.mathematical_efficient_frontier);
+            Plotly.newPlot('frontierChart', frontierData.data, frontierData.layout, {
+                responsive: true,
+                displayModeBar: true,
+                modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d']
+            });
+        } else if (charts.efficient_frontier) {
             const frontierData = JSON.parse(charts.efficient_frontier);
             Plotly.newPlot('frontierChart', frontierData.data, frontierData.layout, {
                 responsive: true,
@@ -141,7 +148,6 @@ async function generateCharts(results) {
             await Plotly.newPlot('riskContributionChart', riskContribData.data, riskContribData.layout, plotConfig);
         }
         
-        // Debug: Check available chart keys
 
         // Save remaining chart data to global variable (used when switching tabs)
         window.allocationChartsData = {};
@@ -154,8 +160,9 @@ async function generateCharts(results) {
                 window.allocationChartsData[config.riskId] = JSON.parse(charts[config.riskKey]);
             }
         });
-        
-        
+
+
+
         // For backward compatibility
         if (charts.asset_allocation && !charts.asset_allocation_max_sharpe) {
             const allocationData = JSON.parse(charts.asset_allocation);

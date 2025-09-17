@@ -256,7 +256,8 @@ def analyze_portfolio():
             results['warnings'].append('Failed to calculate efficient frontier')
         
         logger.info("Portfolio analysis completed successfully")
-        
+
+
         return jsonify(results)
         
     except Exception as e:
@@ -347,9 +348,15 @@ def create_visualizations():
     try:
         data = request.get_json()
         analysis_results = data.get('results')
-        chart_types = data.get('chart_types', ['efficient_frontier'])  # Chart types to generate
+        chart_types = data.get('chart_types', ['efficient_frontier', 'mathematical_efficient_frontier'])  # Chart types to generate
         language = data.get('language', 'en')  # Get language parameter
-        
+
+
+        # Handle 'all' chart type request
+        if chart_types == ['all']:
+            # Use create_summary_dashboard for 'all' request
+            chart_types = ['all']
+
         if not analysis_results:
             return jsonify({'error': 'Analysis result data is required'}), 400
         
@@ -362,11 +369,21 @@ def create_visualizations():
             for chart_type in chart_types:
                 try:
                     if chart_type == 'efficient_frontier':
-                        if ('monte_carlo' in analysis_results and 
+                        if ('monte_carlo' in analysis_results and
                             'efficient_frontier' in analysis_results):
                             charts[chart_type] = visualizer.create_efficient_frontier_plot(
                                 analysis_results['monte_carlo']['simulations'],
                                 analysis_results['efficient_frontier'],
+                                analysis_results.get('optimal_portfolios')
+                            )
+
+                    elif chart_type == 'mathematical_efficient_frontier':
+                        if ('efficient_frontier' in analysis_results and
+                            'asset_statistics' in analysis_results):
+                            # 機能追加版を使用
+                            charts[chart_type] = visualizer.create_working_efficient_frontier_plot(
+                                analysis_results['efficient_frontier'],
+                                analysis_results['asset_statistics'],
                                 analysis_results.get('optimal_portfolios')
                             )
                     
