@@ -196,7 +196,6 @@ class DataFetcher:
                 warnings.append(_('%s: Zero or negative prices detected (%d days)') % (ticker, zero_prices))
             
             # データの連続性チェック
-            date_gaps = pd.date_range(start=data.index.min(), end=data.index.max(), freq='D')
             business_days = pd.bdate_range(start=data.index.min(), end=data.index.max())
             
             missing_ratio = 1 - (len(data) / len(business_days))
@@ -254,7 +253,7 @@ class DataFetcher:
                 # 直近1週間のデータを試しに取得
                 test_data = stock.history(period="1wk", timeout=10)
                 result[ticker] = not test_data.empty
-            except:
+            except Exception:
                 result[ticker] = False
         
         return result

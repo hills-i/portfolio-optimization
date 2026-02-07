@@ -54,26 +54,3 @@ class TestIndexLangRoute:
         resp = client.get('//')
         # Flask は //を / にリダイレクトまたは 404
         assert resp.status_code in (301, 302, 308, 404)
-
-
-class TestResultsRoute:
-    """GET /results のテスト"""
-
-    def test_results_redirects_to_en(self, client):
-        resp = client.get('/results')
-        assert resp.status_code in (301, 302, 308)
-
-
-class TestResultsLangRoute:
-    """GET /<lang>/results のテスト"""
-
-    def test_en_results(self, app, client):
-        """results.html テンプレートが存在しない → TemplateNotFound 例外"""
-        import jinja2
-        with pytest.raises(jinja2.exceptions.TemplateNotFound):
-            client.get('/en/results')
-
-    def test_invalid_lang_results_redirects(self, client):
-        resp = client.get('/de/results')
-        assert resp.status_code == 302
-        assert '/en/results' in resp.headers['Location']

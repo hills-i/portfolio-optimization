@@ -17,17 +17,3 @@ def index_lang(lang):
     
     session['language'] = lang
     return render_template('index.html', lang=lang)
-
-@main_bp.route('/<lang>/results')
-def results_lang(lang):
-    """言語付き結果表示ページ"""
-    if lang not in ['en', 'ja']:
-        return redirect(url_for('main.results_lang', lang='en'))
-    
-    session['language'] = lang
-    return render_template('results.html', lang=lang)
-
-@main_bp.route('/results')
-def results():
-    """結果表示ページ - 英語にリダイレクト"""
-    return redirect(url_for('main.results_lang', lang='en'))

@@ -89,37 +89,41 @@ class PortfolioCalculator:
             raise ValueError(_('Data not loaded. Call load_data() first.'))
         
         num_assets = len(self.mean_returns)
-        results = []
         
         logger.info(f"Starting Monte Carlo simulation with {num_simulations} iterations")
         
-        for i in range(num_simulations):
-            # ランダムな重みを生成
-            weights = np.random.random(num_assets)
-            weights = weights / np.sum(weights)  # 正規化
-            
-            # デバッグ用：最初の5回のシミュレーションの重みをログ出力
-            if i < 5:
-                weight_info = {asset: f"{weight:.3f}" for asset, weight in zip(self.mean_returns.index, weights)}
-                logger.info(f"Simulation {i+1} weights: {weight_info}")
-            
-            # ポートフォリオメトリクス計算
-            metrics = self.calculate_portfolio_metrics(weights)
-            
-            # 結果を保存
-            result = {
-                'expected_return': metrics['expected_return'],
-                'risk': metrics['risk'],
-                'sharpe_ratio': metrics['sharpe_ratio']
-            }
-            
-            # 各資産の配分も保存
-            for j, asset in enumerate(self.mean_returns.index):
-                result[f'weight_{asset}'] = weights[j]
-            
-            results.append(result)
+        # ベクトル化: 全ランダム重みを一括生成
+        weights_matrix = np.random.random((num_simulations, num_assets))
+        weights_matrix = weights_matrix / weights_matrix.sum(axis=1, keepdims=True)
         
-        df = pd.DataFrame(results)
+        # デバッグ用：最初の5回のシミュレーションの重みをログ出力
+        for i in range(min(5, num_simulations)):
+            weight_info = {asset: f"{weights_matrix[i, j]:.3f}" for j, asset in enumerate(self.mean_returns.index)}
+            logger.info(f"Simulation {i+1} weights: {weight_info}")
+        
+        # ベクトル化: ポートフォリオメトリクス一括計算
+        mean_returns_arr = self.mean_returns.values
+        cov_matrix_arr = self.cov_matrix.values
+        
+        expected_returns = weights_matrix @ mean_returns_arr
+        portfolio_variances = np.einsum('ij,jk,ik->i', weights_matrix, cov_matrix_arr, weights_matrix)
+        portfolio_risks = np.sqrt(portfolio_variances)
+        sharpe_ratios = np.where(
+            portfolio_risks > 0,
+            (expected_returns - self.risk_free_rate) / portfolio_risks,
+            0
+        )
+        
+        # DataFrame構築
+        df = pd.DataFrame({
+            'expected_return': expected_returns,
+            'risk': portfolio_risks,
+            'sharpe_ratio': sharpe_ratios
+        })
+        
+        for j, asset in enumerate(self.mean_returns.index):
+            df[f'weight_{asset}'] = weights_matrix[:, j]
+        
         logger.info("Monte Carlo simulation completed successfully")
         
         return df

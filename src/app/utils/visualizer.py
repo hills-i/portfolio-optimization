@@ -493,7 +493,7 @@ class PortfolioVisualizer:
                 filtered_points = []
                 max_return_so_far = -float('inf')
 
-                for _, row in ef_df.iterrows():
+                for _idx, row in ef_df.iterrows():
                     current_return = row['expected_return']
                     if current_return > max_return_so_far:
                         max_return_so_far = current_return
@@ -508,21 +508,21 @@ class PortfolioVisualizer:
                         y=filtered_df['expected_return'].tolist(),
                         mode='lines',
                         line=dict(color='red', width=4),
-                        name='Efficient Frontier',
-                        hovertemplate='Risk: %{x:.4f}<br>Return: %{y:.4f}<extra></extra>'
+                        name=_('Efficient Frontier'),
+                        hovertemplate=_('Risk') + ': %{x:.4f}<br>' + _('Return') + ': %{y:.4f}<extra></extra>'
                     ))
 
                     # 2. シャープレシオマーカー（アセット比率表示付き）
 
                     # カスタムホバーテキストを作成（アセット比率を含む）
                     hover_texts = []
-                    for _, row in filtered_df.iterrows():
+                    for _idx, row in filtered_df.iterrows():
                         # 基本情報
-                        hover_text = f"<b>Efficient Frontier Point</b><br>"
-                        hover_text += f"Risk: {row['risk']:.4f}<br>"
-                        hover_text += f"Return: {row['expected_return']:.4f}<br>"
-                        hover_text += f"Sharpe Ratio: {row['sharpe_ratio']:.3f}<br>"
-                        hover_text += "<br><b>Asset Allocation:</b><br>"
+                        hover_text = f"<b>{_('Efficient Frontier Point')}</b><br>"
+                        hover_text += f"{_('Risk')}: {row['risk']:.4f}<br>"
+                        hover_text += f"{_('Return')}: {row['expected_return']:.4f}<br>"
+                        hover_text += f"{_('Sharpe Ratio')}: {row['sharpe_ratio']:.3f}<br>"
+                        hover_text += f"<br><b>{_('Asset Allocation')}:</b><br>"
 
                         # 各アセットの配分を追加
                         total_weight = 0
@@ -536,7 +536,7 @@ class PortfolioVisualizer:
 
                         # 少量配分のその他をまとめて表示
                         if total_weight < 0.999:  # 99.9%未満の場合
-                            hover_text += f"Others: {(1-total_weight)*100:.1f}%<br>"
+                            hover_text += f"{_('Others')}: {(1-total_weight)*100:.1f}%<br>"
 
                         hover_texts.append(hover_text)
 
@@ -549,7 +549,7 @@ class PortfolioVisualizer:
                             color=filtered_df['sharpe_ratio'].tolist(),
                             colorscale='Viridis',
                             colorbar=dict(
-                                title='Sharpe Ratio',
+                                title=_('Sharpe Ratio'),
                                 x=1.15,  # 凡例より右に配置
                                 len=0.6,  # 高さを調整
                                 thickness=15  # 幅を調整
@@ -557,7 +557,7 @@ class PortfolioVisualizer:
                             showscale=True,
                             line=dict(width=1, color='white')
                         ),
-                        name='Frontier Points',
+                        name=_('Frontier Points'),
                         showlegend=False,
                         text=hover_texts,
                         hovertemplate='%{text}<extra></extra>'
@@ -576,7 +576,7 @@ class PortfolioVisualizer:
                 marker=dict(size=12, color='blue', symbol='diamond'),
                 text=assets,
                 textposition='top center',
-                name='Assets'
+                name=_('Assets')
             ))
 
         # 最適ポートフォリオ（全タイプ表示）
@@ -586,19 +586,19 @@ class PortfolioVisualizer:
                     'symbol': 'star',
                     'color': 'gold',
                     'size': 20,
-                    'name': 'Max Sharpe Ratio'
+                    'name': _('Maximum Sharpe Ratio')
                 },
                 'min_variance': {
                     'symbol': 'square',
                     'color': 'green',
                     'size': 16,
-                    'name': 'Min Variance'
+                    'name': _('Minimum Variance')
                 },
                 'target_return': {
                     'symbol': 'circle',
                     'color': 'purple',
                     'size': 14,
-                    'name': 'Target Return'
+                    'name': _('Target Return Achievement')
                 }
             }
 
@@ -608,10 +608,10 @@ class PortfolioVisualizer:
 
                     # 最適ポートフォリオのアセット配分ホバーテキストを作成
                     hover_text = f"<b>{config['name']}</b><br>"
-                    hover_text += f"Risk: {portfolio['metrics']['risk']:.4f}<br>"
-                    hover_text += f"Return: {portfolio['metrics']['expected_return']:.4f}<br>"
-                    hover_text += f"Sharpe Ratio: {portfolio['metrics']['sharpe_ratio']:.3f}<br>"
-                    hover_text += "<br><b>Asset Allocation:</b><br>"
+                    hover_text += f"{_('Risk')}: {portfolio['metrics']['risk']:.4f}<br>"
+                    hover_text += f"{_('Return')}: {portfolio['metrics']['expected_return']:.4f}<br>"
+                    hover_text += f"{_('Sharpe Ratio')}: {portfolio['metrics']['sharpe_ratio']:.3f}<br>"
+                    hover_text += f"<br><b>{_('Asset Allocation')}:</b><br>"
 
                     # アセット配分を重みでソートして表示
                     weights = portfolio['weights']
@@ -625,7 +625,7 @@ class PortfolioVisualizer:
 
                     # 少量配分のその他をまとめて表示
                     if total_displayed < 0.999:  # 99.9%未満の場合
-                        hover_text += f"Others: {(1-total_displayed)*100:.1f}%<br>"
+                        hover_text += f"{_('Others')}: {(1-total_displayed)*100:.1f}%<br>"
 
                     fig.add_trace(go.Scatter(
                         x=[portfolio['metrics']['risk']],
@@ -643,9 +643,9 @@ class PortfolioVisualizer:
                     ))
 
         fig.update_layout(
-            title='Mathematical Efficient Frontier',
-            xaxis_title='Risk',
-            yaxis_title='Return',
+            title=_('Mathematical Efficient Frontier'),
+            xaxis_title=_('Risk (Standard Deviation)'),
+            yaxis_title=_('Expected Return'),
             template='plotly_white',
             legend=dict(
                 orientation="v",

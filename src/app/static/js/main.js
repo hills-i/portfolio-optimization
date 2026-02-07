@@ -288,7 +288,7 @@ function validateForm() {
     }
     
     const diffTime = Math.abs(endDate - startDate);
-    const diffYears = diffTime / (1000 * 60 * 60 * 24 * 365);
+    const diffYears = diffTime / (1000 * 60 * 60 * 24 * 365.25 + 24);
     
     if (diffYears < 1) {
         errors.push('Analysis period must be at least 1 year');

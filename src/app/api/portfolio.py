@@ -125,9 +125,13 @@ def analyze_portfolio():
         tickers = data.get('tickers', [])
         start_date = data.get('start_date')
         end_date = data.get('end_date')
-        risk_free_rate = data.get('risk_free_rate', current_app.config.get('DEFAULT_RISK_FREE_RATE', 0.005))
-        simulation_count = data.get('simulation_count', current_app.config.get('DEFAULT_SIMULATION_COUNT', 10000))
         target_return = data.get('target_return')  # Optional
+        
+        try:
+            risk_free_rate = float(data.get('risk_free_rate', current_app.config.get('DEFAULT_RISK_FREE_RATE', 0.005)))
+            simulation_count = int(data.get('simulation_count', current_app.config.get('DEFAULT_SIMULATION_COUNT', 10000)))
+        except (TypeError, ValueError):
+            return jsonify({'error': 'Invalid parameter types for risk_free_rate or simulation_count'}), 400
         
         # Data retrieval
         logger.info(f"Starting portfolio analysis for tickers: {tickers}")
@@ -231,9 +235,9 @@ def analyze_portfolio():
         try:
             # First try constraint-free minimum variance portfolio
             min_var_result = calculator.optimize_min_variance_portfolio()
-        except:
+        except Exception as e:
             # Fallback to traditional method
-            logger.warning("Using fallback min variance calculation")
+            logger.warning(f"Using fallback min variance calculation: {e}")
             min_expected_return = min(asset_stats[asset]['expected_return'] for asset in asset_stats)
             min_var_result = calculator.optimize_portfolio(target_return=min_expected_return)
         if min_var_result['success']:
@@ -295,8 +299,24 @@ def compare_simulation_counts():
         tickers = data.get('tickers', [])
         start_date = data.get('start_date')
         end_date = data.get('end_date')
-        risk_free_rate = data.get('risk_free_rate', current_app.config.get('DEFAULT_RISK_FREE_RATE', 0.005))
+        
+        try:
+            risk_free_rate = float(data.get('risk_free_rate', current_app.config.get('DEFAULT_RISK_FREE_RATE', 0.005)))
+        except (TypeError, ValueError):
+            return jsonify({'error': 'Invalid parameter type for risk_free_rate'}), 400
+        
         simulation_counts = data.get('simulation_counts', [100, 1000, 5000, 10000])
+        
+        # Validate simulation_counts
+        max_simulation_count = current_app.config.get('MAX_SIMULATION_COUNT', 50000)
+        if not isinstance(simulation_counts, list) or len(simulation_counts) == 0 or len(simulation_counts) > 10:
+            return jsonify({'error': 'simulation_counts must be a list of 1-10 items'}), 400
+        try:
+            simulation_counts = [int(c) for c in simulation_counts]
+        except (TypeError, ValueError):
+            return jsonify({'error': 'All simulation_counts must be integers'}), 400
+        if any(c <= 0 or c > max_simulation_count for c in simulation_counts):
+            return jsonify({'error': f'Each simulation count must be between 1 and {max_simulation_count}'}), 400
         
         # Data retrieval
         logger.info(f"Starting simulation comparison for tickers: {tickers}")
