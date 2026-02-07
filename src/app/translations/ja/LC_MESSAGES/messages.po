@@ -123,8 +123,8 @@ msgstr "リスク"
 msgid "Sharpe Ratio"
 msgstr "シャープレシオ"
 
-msgid "Risk Metrics (VaR)"
-msgstr "リスク指標 (VaR)"
+msgid "Tail Percentiles"
+msgstr "テールパーセンタイル"
 
 msgid "Confidence Intervals"
 msgstr "信頼区間"
@@ -279,26 +279,26 @@ msgstr "99%信頼区間"
 msgid "Confidence intervals show the range containing 95%%/99%% of simulation results"
 msgstr "信頼区間はシミュレーション結果の95%%/99%%を含む範囲を示します"
 
-msgid "Return VaR"
-msgstr "リターンVaR"
+msgid "Return Lower Tail"
+msgstr "リターン下側テール"
 
-msgid "Risk VaR"
-msgstr "リスクVaR"
+msgid "Risk Upper Tail"
+msgstr "リスク上側テール"
 
-msgid "95% VaR"
-msgstr "95% VaR"
+msgid "5th Percentile"
+msgstr "5パーセンタイル"
 
-msgid "99% VaR"
-msgstr "99% VaR"
+msgid "1st Percentile"
+msgstr "1パーセンタイル"
 
-msgid "95% Upper"
-msgstr "95%上限"
+msgid "95th Percentile"
+msgstr "95パーセンタイル"
 
-msgid "99% Upper"
-msgstr "99%上限"
+msgid "99th Percentile"
+msgstr "99パーセンタイル"
 
-msgid "VaR indicates the maximum expected loss at the specified confidence level"
-msgstr "VaRは指定された信頼水準での最大予想損失を示します"
+msgid "Percentile values from the distribution of simulated portfolio allocations"
+msgstr "シミュレーションで生成したポートフォリオ配分の分布からのパーセンタイル値"
 
 msgid "Failed to calculate optimal portfolio"
 msgstr "最適ポートフォリオの計算に失敗しました"

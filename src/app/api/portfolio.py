@@ -265,8 +265,6 @@ def analyze_portfolio():
         logger.error(f"Traceback: {traceback.format_exc()}")
         return jsonify({
             'error': 'An error occurred during portfolio analysis',
-            'details': str(e),
-            'type': type(e).__name__
         }), 500
 
 @bp.route('/compare-simulations', methods=['POST'])
@@ -335,11 +333,10 @@ def compare_simulation_counts():
             'metadata': fetch_result['metadata']
         })
         
-    except Exception as e:
-        logger.error(f"Simulation comparison error: {str(e)}")
+    except Exception:
+        logger.exception("Simulation comparison error")
         return jsonify({
-            'error': 'An error occurred during simulation comparison',
-            'details': str(e)
+            'error': 'An error occurred during simulation comparison'
         }), 500
 
 @bp.route('/visualize', methods=['POST'])

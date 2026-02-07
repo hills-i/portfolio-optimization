@@ -123,8 +123,8 @@ msgstr "Risk"
 msgid "Sharpe Ratio"
 msgstr "Sharpe Ratio"
 
-msgid "Risk Metrics (VaR)"
-msgstr "Risk Metrics (VaR)"
+msgid "Tail Percentiles"
+msgstr "Tail Percentiles"
 
 msgid "Confidence Intervals"
 msgstr "Confidence Intervals"
@@ -279,26 +279,26 @@ msgstr "99% Confidence Interval"
 msgid "Confidence intervals show the range containing 95%%/99%% of simulation results"
 msgstr "Confidence intervals show the range containing 95%%/99%% of simulation results"
 
-msgid "Return VaR"
-msgstr "Return VaR"
+msgid "Return Lower Tail"
+msgstr "Return Lower Tail"
 
-msgid "Risk VaR"
-msgstr "Risk VaR"
+msgid "Risk Upper Tail"
+msgstr "Risk Upper Tail"
 
-msgid "95% VaR"
-msgstr "95% VaR"
+msgid "5th Percentile"
+msgstr "5th Percentile"
 
-msgid "99% VaR"
-msgstr "99% VaR"
+msgid "1st Percentile"
+msgstr "1st Percentile"
 
-msgid "95% Upper"
-msgstr "95% Upper"
+msgid "95th Percentile"
+msgstr "95th Percentile"
 
-msgid "99% Upper"
-msgstr "99% Upper"
+msgid "99th Percentile"
+msgstr "99th Percentile"
 
-msgid "VaR indicates the maximum expected loss at the specified confidence level"
-msgstr "VaR indicates the maximum expected loss at the specified confidence level"
+msgid "Percentile values from the distribution of simulated portfolio allocations"
+msgstr "Percentile values from the distribution of simulated portfolio allocations"
 
 msgid "Failed to calculate optimal portfolio"
 msgstr "Failed to calculate optimal portfolio"

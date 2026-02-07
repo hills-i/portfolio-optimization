@@ -738,8 +738,8 @@ function displaySimulationDetails(results) {
     // Update percentiles table
     updatePercentilesTable(analysis.percentiles);
     
-    // Display VaR analysis
-    displayVarAnalysis(analysis.var_analysis);
+    // Display tail percentiles
+    displayTailPercentiles(analysis.tail_percentiles);
     
     // Display confidence intervals
     displayConfidenceIntervals(analysis.confidence_intervals);
@@ -818,32 +818,32 @@ function updatePercentilesTable(percentiles) {
     tbody.innerHTML = html;
 }
 
-// Display VaR analysis
-function displayVarAnalysis(varAnalysis) {
+// Display tail percentiles of allocation distribution
+function displayTailPercentiles(tailPercentiles) {
     const container = document.getElementById('varAnalysisContent');
     if (!container) return;
     
     const html = `
         <div class="row">
             <div class="col-6">
-                <h6 class="text-muted">${_('Return VaR')}</h6>
+                <h6 class="text-muted">${_('Return Lower Tail')}</h6>
                 <ul class="list-unstyled small">
-                    <li><strong>${_('95% VaR')}:</strong> ${(varAnalysis.return_var_95 * 100).toFixed(2)}%</li>
-                    <li><strong>${_('99% VaR')}:</strong> ${(varAnalysis.return_var_99 * 100).toFixed(2)}%</li>
+                    <li><strong>${_('5th Percentile')}:</strong> ${(tailPercentiles.return_p5 * 100).toFixed(2)}%</li>
+                    <li><strong>${_('1st Percentile')}:</strong> ${(tailPercentiles.return_p1 * 100).toFixed(2)}%</li>
                 </ul>
             </div>
             <div class="col-6">
-                <h6 class="text-muted">${_('Risk VaR')}</h6>
+                <h6 class="text-muted">${_('Risk Upper Tail')}</h6>
                 <ul class="list-unstyled small">
-                    <li><strong>${_('95% Upper')}:</strong> ${(varAnalysis.risk_var_95 * 100).toFixed(2)}%</li>
-                    <li><strong>${_('99% Upper')}:</strong> ${(varAnalysis.risk_var_99 * 100).toFixed(2)}%</li>
+                    <li><strong>${_('95th Percentile')}:</strong> ${(tailPercentiles.risk_p95 * 100).toFixed(2)}%</li>
+                    <li><strong>${_('99th Percentile')}:</strong> ${(tailPercentiles.risk_p99 * 100).toFixed(2)}%</li>
                 </ul>
             </div>
         </div>
         <div class="mt-2">
             <small class="text-muted">
                 <i class="bi bi-info-circle me-1"></i>
-                ${_('VaR indicates the maximum expected loss at the specified confidence level')}
+                ${_('Percentile values from the distribution of simulated portfolio allocations')}
             </small>
         </div>
     `;

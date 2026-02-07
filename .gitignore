@@ -52,6 +52,7 @@ src/visualize_result.json
 # Translation files - exclude compiled and generated files
 *.mo
 messages.pot
+.coverage
 
 CLAUDE.md
 

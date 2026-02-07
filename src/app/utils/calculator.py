@@ -164,18 +164,22 @@ class PortfolioCalculator:
             # 累積リターンを計算
             cumulative_returns = np.prod(1 + simulated_returns, axis=0) - 1
             
-            # ポートフォリオリターンを計算
+            # ポートフォリオリターンを計算（累積）
             portfolio_return = np.dot(optimal_weights, cumulative_returns)
             
-            # 日次リターンの標準偏差からポートフォリオリスクを計算
+            # 累積リターンを年率化
+            years = time_horizon / 252
+            annualized_return = (1 + portfolio_return) ** (1 / years) - 1 if years > 0 else portfolio_return
+            
+            # ポートフォリオリスク（年率）
             portfolio_variance = np.dot(optimal_weights.T, np.dot(self.cov_matrix, optimal_weights))
             portfolio_risk = np.sqrt(portfolio_variance)
             
-            # シャープレシオ
-            sharpe_ratio = (portfolio_return - self.risk_free_rate) / portfolio_risk if portfolio_risk > 0 else 0
+            # シャープレシオ（年率ベースで統一）
+            sharpe_ratio = (annualized_return - self.risk_free_rate) / portfolio_risk if portfolio_risk > 0 else 0
             
             result = {
-                'simulated_return': portfolio_return,
+                'simulated_return': annualized_return,
                 'risk': portfolio_risk,
                 'sharpe_ratio': sharpe_ratio,
                 'simulation_type': 'return_based'
@@ -413,16 +417,19 @@ class PortfolioCalculator:
         for asset in self.mean_returns.index:
             asset_returns = self.returns[asset]
             
+            annual_mean = self.mean_returns[asset]
+            annual_std = np.sqrt(self.cov_matrix.loc[asset, asset])
+            
             stats[asset] = {
-                'expected_return': self.mean_returns[asset],
-                'risk': np.sqrt(self.cov_matrix.loc[asset, asset]),
-                'sharpe_ratio': (self.mean_returns[asset] - self.risk_free_rate) / np.sqrt(self.cov_matrix.loc[asset, asset]),
+                'expected_return': annual_mean,
+                'risk': annual_std,
+                'sharpe_ratio': (annual_mean - self.risk_free_rate) / annual_std,
                 'skewness': asset_returns.skew(),
                 'kurtosis': asset_returns.kurtosis(),
                 'min_return': asset_returns.min(),
                 'max_return': asset_returns.max(),
-                'var_95': asset_returns.quantile(0.05),  # 95% VaR
-                'var_99': asset_returns.quantile(0.01)   # 99% VaR
+                'var_95': annual_mean - 1.645 * annual_std,  # 95% パラメトリックVaR（年率）
+                'var_99': annual_mean - 2.326 * annual_std   # 99% パラメトリックVaR（年率）
             }
         
         return stats
@@ -528,12 +535,12 @@ class PortfolioCalculator:
                 'sharpe': float(mc_results['sharpe_ratio'].quantile(p/100))
             }
         
-        # VaR計算（95%と99%信頼水準）
-        analysis['var_analysis'] = {
-            'return_var_95': float(mc_results['expected_return'].quantile(0.05)),
-            'return_var_99': float(mc_results['expected_return'].quantile(0.01)),
-            'risk_var_95': float(mc_results['risk'].quantile(0.95)),  # リスクの場合は上側
-            'risk_var_99': float(mc_results['risk'].quantile(0.99))
+        # 配分分布のテールパーセンタイル（ランダム配分による期待リターン・リスクの分布）
+        analysis['tail_percentiles'] = {
+            'return_p5': float(mc_results['expected_return'].quantile(0.05)),
+            'return_p1': float(mc_results['expected_return'].quantile(0.01)),
+            'risk_p95': float(mc_results['risk'].quantile(0.95)),
+            'risk_p99': float(mc_results['risk'].quantile(0.99))
         }
         
         # 信頼区間

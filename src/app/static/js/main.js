@@ -33,7 +33,7 @@ function setupDateDefaults() {
     const endDate = new Date();
     const startDate = new Date();
     startDate.setFullYear(endDate.getFullYear() - 30); // Default to 30 years ago
-
+    startDate.setDate(endDate.getDate() + 1); 
     document.getElementById('endDate').valueAsDate = endDate;
     document.getElementById('startDate').valueAsDate = startDate;
 }
