@@ -1,18 +1,16 @@
 """
-config.py のテスト
+Tests for config.py.
 """
 import os
 import pytest
 
 
 class TestConfig:
-    """Config 基本設定のテスト"""
+    """Tests for the base Config settings."""
 
-    def test_default_secret_key(self):
-        """SECRET_KEY のデフォルト値"""
+    def test_secret_key_comes_from_environment(self):
         from config import Config
-        # 環境変数が設定されていない場合はデフォルト値
-        assert Config.SECRET_KEY is not None
+        assert Config.SECRET_KEY == os.environ.get('SECRET_KEY')
 
     def test_default_risk_free_rate(self):
         from config import Config
@@ -51,6 +49,12 @@ class TestDevelopmentConfig:
         from config import DevelopmentConfig
         assert DevelopmentConfig.DEBUG is True
 
+    def test_has_development_secret_key_default(self):
+        from config import DEV_SECRET_KEY, DevelopmentConfig
+        assert DevelopmentConfig.SECRET_KEY is not None
+        if os.environ.get('SECRET_KEY') is None:
+            assert DevelopmentConfig.SECRET_KEY == DEV_SECRET_KEY
+
     def test_inherits_config(self):
         from config import DevelopmentConfig, Config
         assert issubclass(DevelopmentConfig, Config)
@@ -60,6 +64,10 @@ class TestProductionConfig:
     def test_debug_is_false(self):
         from config import ProductionConfig
         assert ProductionConfig.DEBUG is False
+
+    def test_secret_key_must_come_from_environment(self):
+        from config import ProductionConfig
+        assert ProductionConfig.SECRET_KEY == os.environ.get('SECRET_KEY')
 
     def test_inherits_config(self):
         from config import ProductionConfig, Config

@@ -1,5 +1,5 @@
 """
-api/portfolio.py のテスト（全8エンドポイント）
+Tests for api/portfolio.py (all 8 endpoints).
 """
 import pytest
 import json
@@ -114,7 +114,7 @@ class TestGetTickerInfoEndpoint:
 class TestAnalyzePortfolioEndpoint:
 
     def _make_fetch_result(self):
-        """mock DataFetcher.fetch_stock_data の返り値"""
+        """Mock return value for DataFetcher.fetch_stock_data."""
         np.random.seed(42)
         dates = pd.bdate_range(start='2023-01-02', periods=100)
         df = pd.DataFrame({

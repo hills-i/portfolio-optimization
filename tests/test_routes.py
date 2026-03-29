@@ -1,11 +1,11 @@
 """
-routes.py のテスト
+Tests for routes.py.
 """
 import pytest
 
 
 class TestIndexRoute:
-    """GET / のテスト"""
+    """Tests for GET /."""
 
     def test_index_redirects_to_en(self, client):
         resp = client.get('/')
@@ -18,7 +18,7 @@ class TestIndexRoute:
 
 
 class TestIndexLangRoute:
-    """GET /<lang>/ のテスト"""
+    """Tests for GET /<lang>/."""
 
     def test_en_returns_200(self, client):
         resp = client.get('/en/')
@@ -50,7 +50,7 @@ class TestIndexLangRoute:
         assert resp.status_code == 302
 
     def test_empty_lang_not_found(self, client):
-        """空の lang パラメータは / と扱われリダイレクト"""
+        """An empty lang parameter is treated as / and redirected."""
         resp = client.get('//')
-        # Flask は //を / にリダイレクトまたは 404
+        # Flask may redirect // to / or return 404.
         assert resp.status_code in (301, 302, 308, 404)

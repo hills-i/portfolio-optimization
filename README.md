@@ -1,6 +1,6 @@
 # Portfolio Optimization Web Application
 
-A modern, responsive web application for financial portfolio analysis and optimization using Modern Portfolio Theory. Built with Flask and featuring interactive visualizations, multi-language support, and comprehensive risk analysis tools.
+A web application for financial portfolio analysis and optimization using Modern Portfolio Theory. Built with Flask and featuring interactive visualizations, and comprehensive risk analysis tools.
 
 ## ✨ Features
 
@@ -19,9 +19,7 @@ A modern, responsive web application for financial portfolio analysis and optimi
 ### 🌐 **User Experience**
 - **Interactive Charts**: Real-time visualization with Plotly.js
 - **Multi-language Support**: English and Japanese localization
-- **Real-time Validation**: Client-side and server-side input validation
-- **Responsive Design**: Mobile-friendly Bootstrap interface
-- **Export Functionality**: Download analysis results and charts
+- **Result Export**: Export analysis results in JSON format
 
 ## 🛠 Technology Stack
 
@@ -31,7 +29,6 @@ A modern, responsive web application for financial portfolio analysis and optimi
 - **Visualization**: plotly 6.2.0 for interactive charts
 - **Frontend**: Bootstrap 5.3.2, vanilla JavaScript
 - **Internationalization**: Flask-Babel for multi-language support
-- **Database**: SQLite (session management)
 
 ## 🚀 Quick Start
 
@@ -62,18 +59,8 @@ python src/run.py
 ```
 
 5. **Open your browser:**
-   - Navigate to `http://localhost:5002`
-   - The application runs on port 5002 by default
-
-### Docker (Optional)
-
-```bash
-# Build the Docker image
-docker build -t portfolio-optimization .
-
-# Run the container
-docker run -p 5002:5002 portfolio-optimization
-```
+   - Navigate to `http://localhost:5000`
+   - The application runs on port 5000 by default
 
 ## 📖 Usage Guide
 
@@ -85,7 +72,7 @@ docker run -p 5002:5002 portfolio-optimization
    - Real-time ticker validation
 
 2. **📅 Select Date Range**
-   - Choose analysis period (1-10 years)
+   - Choose analysis period (1-30 years)
    - Minimum 1 year of historical data required
    - Automatically validates data availability
 
@@ -107,9 +94,8 @@ docker run -p 5002:5002 portfolio-optimization
    - **Asset Statistics**: Individual performance metrics
 
 6. **💾 Export Results**
-   - Download charts as PNG/PDF
-   - Export data as CSV/Excel
-   - Save analysis summary
+   - Export analysis results as JSON
+   - Reuse the exported data for later inspection
 
 ### Example Analysis
 
@@ -171,7 +157,7 @@ portfolio-optimization/
 - `POST /api/analyze` - Main portfolio optimization analysis
 - `POST /api/compare-simulations` - Compare different simulation parameters
 - `POST /api/visualize` - Generate interactive charts and visualizations
-- `POST /api/export` - Export analysis results in various formats
+- `POST /api/export` - Export analysis results in JSON format
 - `GET /api/health` - Application health check and status
 
 ### API Response Format
@@ -192,8 +178,8 @@ portfolio-optimization/
 
 ### Environment Variables
 
-**Production Required:**
-- `SECRET_KEY`: Flask secret key for session security
+**Recommended for deployment:**
+- `SECRET_KEY`: Required in production for Flask session security
 - `FLASK_ENV`: Set to 'production' for production deployment
 
 **Optional Configuration:**
@@ -206,9 +192,16 @@ export DATABASE_URL="sqlite:///production.db"
 export FLASK_ENV="production"
 ```
 
+**Docker Example:**
+```bash
+docker run --rm -p 5000:5000 \
+  -e SECRET_KEY="your-randomly-generated-secret-key-here" \
+  portfolio-optimization
+```
+
 **Development Setup:**
 ```bash
-# Development uses secure defaults
+# Development uses local-friendly defaults
 export FLASK_ENV="development"
 ```
 
@@ -218,7 +211,7 @@ export FLASK_ENV="development"
 |---------|---------|-------|-------------|
 | Risk-free Rate | 0.5% | 0-10% | Annual risk-free rate for Sharpe ratio calculations |
 | Simulation Count | 10,000 | 1,000-50,000 | Monte Carlo simulation iterations |
-| Analysis Period | 3 years | 1-10 years | Historical data timeframe |
+| Analysis Period | 30 years | 1-30 years | Historical data timeframe |
 | Asset Count | 2-20 | 2-20 | Number of supported tickers per analysis |
 | Session Timeout | 1 hour | - | User session duration |
 | Data Fetch Timeout | 30 seconds | - | Yahoo Finance API timeout |
@@ -241,9 +234,8 @@ python src/run.py
 **Development Features:**
 - 🔄 Auto-reload on code changes
 - 🐛 Debug mode with detailed error pages
-- 📝 Comprehensive logging to `app.log`
-- 🌐 Multi-language hot-reload
-- 🧪 Built-in testing utilities
+- 🌐 English/Japanese UI support
+- 🧪 Test suite included under `tests/`
 
 ### Adding New Features
 
@@ -259,10 +251,10 @@ python src/run.py
 
 ```bash
 # Run basic health check
-curl http://localhost:5002/api/health
+curl http://localhost:5000/api/health
 
 # Test portfolio analysis
-curl -X POST http://localhost:5002/api/validate \
+curl -X POST http://localhost:5000/api/validate \
   -H "Content-Type: application/json" \
   -d '{"tickers":["AAPL","MSFT"],"start_date":"2023-01-01","end_date":"2024-01-01"}'
 ```
@@ -270,32 +262,19 @@ curl -X POST http://localhost:5002/api/validate \
 ## 🔒 Security & Privacy
 
 ### Security Features
-- ✅ **Input Validation**: Comprehensive sanitization and validation
-- ✅ **Session Security**: Secure session management with timeout
-- ✅ **No Data Persistence**: No storage of user portfolio data
-- ✅ **Environment Variables**: Secure configuration management
-- ✅ **Error Handling**: Safe error messages without data leakage
+- ✅ **Input Validation**: Request validation on portfolio parameters and ticker symbols
+- ✅ **Environment Variables**: Key settings can be provided through environment variables
+- ✅ **Error Handling**: API endpoints return generic error messages to the client
 
 ### Privacy Protection
-- 🔐 **No Personal Data**: Only processes public stock ticker symbols
-- 🚫 **No Data Storage**: Analysis results are session-only
-- 🛡️ **Secure Headers**: Standard security headers implemented
-- 📝 **Audit Logs**: Comprehensive logging for security monitoring
+- 🔐 **No Personal Data**: The app works with public market ticker symbols and price data
+- 🚫 **No User Accounts**: The project does not include account registration or profile storage
+- 🌐 **Session Usage**: Flask session data is used for language preference
 
 ## ⚡ Performance
 
-### Optimization Features
-- **Vectorized Operations**: NumPy/pandas for efficient calculations
-- **Smart Caching**: Session-based result caching
-- **Progressive Loading**: Real-time progress indicators
-- **Lazy Loading**: On-demand chart rendering
-- **Efficient DOM**: Minimal client-side updates
-
-### Performance Metrics
-- Analysis Time: 10-30 seconds (10,000 simulations)
-- Memory Usage: ~100MB peak during analysis
-- Concurrent Users: Supports multiple simultaneous analyses
-- Chart Rendering: <2 seconds for interactive visualizations
+- **Monte Carlo Analysis**: Configurable simulation counts for balancing speed and detail
+- **Interactive Charts**: Plotly-based chart rendering in the browser
 
 ### Code Style
 - Follow PEP 8 for Python code

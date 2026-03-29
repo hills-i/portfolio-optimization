@@ -1,5 +1,5 @@
 """
-validator.py のテスト
+Tests for validator.py.
 """
 import pytest
 from datetime import datetime, timedelta
@@ -15,7 +15,7 @@ class TestValidateTickers:
         from app.utils.validator import InputValidator
         return InputValidator(mock_config)
 
-    # --- 正常系 ---
+    # --- Valid cases ---
     def test_valid_two_tickers(self, app_context, mock_config):
         v = self._make_validator(mock_config)
         r = v.validate_tickers(['AAPL', 'GOOGL'])
@@ -23,13 +23,13 @@ class TestValidateTickers:
         assert r['errors'] == []
 
     def test_valid_max_tickers(self, app_context, mock_config):
-        tickers = [f'T{i:02d}' for i in range(20)]  # ちょうど MAX_ASSETS=20
+        tickers = [f'T{i:02d}' for i in range(20)]  # Exactly MAX_ASSETS=20.
         v = self._make_validator(mock_config)
         r = v.validate_tickers(tickers)
         assert r['valid'] is True
 
     def test_valid_ticker_with_dot(self, app_context, mock_config):
-        """日本株のドット付きティッカー"""
+        """Ticker with a dot, such as a Japanese stock symbol."""
         v = self._make_validator(mock_config)
         r = v.validate_tickers(['7203.T', 'AAPL'])
         assert r['valid'] is True
@@ -39,7 +39,7 @@ class TestValidateTickers:
         r = v.validate_tickers(['7203', 'AAPL'])
         assert r['valid'] is True
 
-    # --- 異常系 ---
+    # --- Invalid cases ---
     def test_empty_list(self, app_context, mock_config):
         v = self._make_validator(mock_config)
         r = v.validate_tickers([])
@@ -60,19 +60,19 @@ class TestValidateTickers:
     def test_duplicate_tickers(self, app_context, mock_config):
         v = self._make_validator(mock_config)
         r = v.validate_tickers(['AAPL', 'AAPL'])
-        # 重複がある → valid=False (注: 数も2なので数量OKだがdup)
+        # Duplicate tickers should fail validation.
         assert r['valid'] is False
 
     def test_invalid_format_lowercase(self, app_context, mock_config):
-        """小文字はパターンに一致しない→upper()するので実際はOK"""
+        """Lowercase input stays valid because the validator normalizes with upper()."""
         v = self._make_validator(mock_config)
-        # validator内で .upper() してからパターンマッチ
+        # The validator uppercases input before applying the pattern match.
         r = v.validate_tickers(['aapl', 'googl'])
-        assert r['valid'] is True  # upper()変換後でマッチ
+        assert r['valid'] is True  # Matches after upper() normalization.
 
     def test_invalid_format_too_long(self, app_context, mock_config):
         v = self._make_validator(mock_config)
-        r = v.validate_tickers(['ABCDEFGHI', 'AAPL'])  # 9文字 > 8
+        r = v.validate_tickers(['ABCDEFGHI', 'AAPL'])  # 9 characters > 8.
         assert r['valid'] is False
 
     def test_invalid_format_special_chars(self, app_context, mock_config):
@@ -81,10 +81,10 @@ class TestValidateTickers:
         assert r['valid'] is False
 
     def test_duplicate_different_case(self, app_context, mock_config):
-        """大文字小文字が異なる重複"""
+        """Duplicate tickers with different letter case."""
         v = self._make_validator(mock_config)
         r = v.validate_tickers(['AAPL', 'aapl'])
-        assert r['valid'] is False  # upper()で重複判定
+        assert r['valid'] is False  # Duplicates are detected after upper() normalization.
 
 
 # ──────────────────────────────────────────────
@@ -96,19 +96,19 @@ class TestValidateDateRange:
         from app.utils.validator import InputValidator
         return InputValidator(mock_config)
 
-    # --- 正常系 ---
+    # --- Valid cases ---
     def test_valid_two_years(self, app_context, mock_config):
         v = self._make_validator(mock_config)
         r = v.validate_date_range('2022-01-01', '2024-01-01')
         assert r['valid'] is True
 
     def test_valid_exactly_one_year(self, app_context, mock_config):
-        """ちょうど1年（MIN_ANALYSIS_YEARS）"""
+        """Exactly one year (MIN_ANALYSIS_YEARS)."""
         v = self._make_validator(mock_config)
-        r = v.validate_date_range('2023-01-01', '2024-01-02')  # 366日 ≈ 1年
+        r = v.validate_date_range('2023-01-01', '2024-01-02')  # 366 days ~= 1 year.
         assert r['valid'] is True
 
-    # --- 異常系 ---
+    # --- Invalid cases ---
     def test_start_after_end(self, app_context, mock_config):
         v = self._make_validator(mock_config)
         r = v.validate_date_range('2024-06-01', '2024-01-01')
@@ -120,7 +120,7 @@ class TestValidateDateRange:
         assert r['valid'] is False
 
     def test_period_too_short(self, app_context, mock_config):
-        """1年未満"""
+        """Less than one year."""
         v = self._make_validator(mock_config)
         r = v.validate_date_range('2024-01-01', '2024-06-01')
         assert r['valid'] is False
@@ -142,19 +142,19 @@ class TestValidateDateRange:
         assert r['valid'] is False
 
     def test_very_old_start_date_gives_warning(self, app_context, mock_config):
-        """31年以上前の開始日 → 警告"""
+        """A start date more than 31 years ago should trigger a warning."""
         v = self._make_validator(mock_config)
         old_date = (datetime.now() - timedelta(days=32 * 365)).strftime('%Y-%m-%d')
         recent = '2024-01-01'
         r = v.validate_date_range(old_date, recent)
-        # MAX_ANALYSIS_YEARS=31 を超える場合はエラー
-        # 31年以上前の開始日は期間オーバーかwarning
+        # Periods over MAX_ANALYSIS_YEARS=31 may fail validation.
+        # A start date older than 31 years may either exceed the max period or produce a warning.
         assert len(r['warnings']) > 0 or r['valid'] is False
 
     def test_period_exceeds_max(self, app_context, mock_config):
-        """MAX_ANALYSIS_YEARS=31 を超える期間"""
+        """Period exceeds MAX_ANALYSIS_YEARS=31."""
         v = self._make_validator(mock_config)
-        r = v.validate_date_range('1990-01-01', '2024-01-01')  # 34年
+        r = v.validate_date_range('1990-01-01', '2024-01-01')  # 34 years.
         assert r['valid'] is False
 
 
@@ -178,13 +178,13 @@ class TestValidateTargetReturn:
         assert r['valid'] is True
 
     def test_boundary_min(self, app_context, mock_config):
-        """-0.5 はギリギリOK"""
+        """-0.5 is still valid."""
         v = self._make_validator(mock_config)
         r = v.validate_target_return(-0.5)
         assert r['valid'] is True
 
     def test_boundary_max(self, app_context, mock_config):
-        """1.0 はギリギリOK"""
+        """1.0 is still valid."""
         v = self._make_validator(mock_config)
         r = v.validate_target_return(1.0)
         assert r['valid'] is True
@@ -349,7 +349,7 @@ class TestValidateAllInputs:
         assert r['valid'] is False
 
     def test_optional_fields_omitted(self, app_context, mock_config):
-        """オプションフィールドが省略された場合も OK"""
+        """Optional fields may be omitted."""
         v = self._make_validator(mock_config)
         inputs = {
             'tickers': ['AAPL', 'GOOGL'],

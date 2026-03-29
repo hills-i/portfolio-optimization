@@ -1,5 +1,5 @@
 """
-calculator.py のテスト
+Tests for calculator.py.
 """
 import pytest
 import numpy as np
@@ -25,7 +25,7 @@ class TestLoadData:
         from app.utils.calculator import PortfolioCalculator
         calc = PortfolioCalculator()
         calc.load_data(sample_price_data)
-        # 日次リターンは元データより1行少ない（dropna）
+        # Daily returns have one fewer row than the input data because of dropna.
         assert len(calc.returns) == len(sample_price_data) - 1
         assert len(calc.returns.columns) == 3
 
@@ -46,11 +46,11 @@ class TestLoadData:
         pd.testing.assert_frame_equal(calc.cov_matrix, expected)
 
     def test_load_data_empty_df(self, app_context):
-        """空のDataFrameでもエラーにはならない(列0のDF)"""
+        """An empty DataFrame should not raise an error (0-column DataFrame)."""
         from app.utils.calculator import PortfolioCalculator
         calc = PortfolioCalculator()
         result = calc.load_data(pd.DataFrame())
-        # 空DataFrameは pct_change().dropna() が成功するため True が返る
+        # An empty DataFrame still returns True because pct_change().dropna() succeeds.
         assert result is True
         assert len(calc.returns.columns) == 0
 
@@ -74,10 +74,10 @@ class TestCalculatePortfolioMetrics:
         assert abs(metrics['variance'] - metrics['risk'] ** 2) < 1e-10
 
     def test_concentrated_weight(self, app_context, loaded_calculator):
-        """100%を1資産に配分"""
+        """Allocate 100% to a single asset."""
         weights = np.array([1.0, 0.0, 0.0])
         metrics = loaded_calculator.calculate_portfolio_metrics(weights)
-        # 単一資産のリターン・リスクに一致
+        # Return and risk should match the single asset.
         assert abs(metrics['expected_return'] - loaded_calculator.mean_returns.iloc[0]) < 1e-10
         asset_risk = np.sqrt(loaded_calculator.cov_matrix.iloc[0, 0])
         assert abs(metrics['risk'] - asset_risk) < 1e-10
@@ -140,12 +140,12 @@ class TestOptimizePortfolio:
         assert result['optimization_type'] == 'max_sharpe'
         assert 'weights' in result
         assert 'metrics' in result
-        # ウェイト合計 ≈ 1
+        # Weights sum to about 1.
         total = sum(result['weights'].values())
         assert abs(total - 1.0) < 1e-6
 
     def test_min_risk_with_target(self, app_context, loaded_calculator):
-        # mean_returns の中間値を target に設定
+        # Set the target to the midpoint of mean_returns.
         target = float(loaded_calculator.mean_returns.mean())
         result = loaded_calculator.optimize_portfolio(target_return=target)
         assert result['success'] is True
@@ -156,7 +156,7 @@ class TestOptimizePortfolio:
         result = loaded_calculator.optimize_portfolio()
         if result['success']:
             for w in result['weights'].values():
-                assert w >= -1e-10  # 空売り制限
+                assert w >= -1e-10  # No short-selling allowed.
 
     def test_raises_without_data(self, app_context):
         from app.utils.calculator import PortfolioCalculator
@@ -178,11 +178,11 @@ class TestOptimizeMinVariancePortfolio:
         assert abs(total - 1.0) < 1e-6
 
     def test_min_variance_has_lowest_risk(self, app_context, loaded_calculator):
-        """最小分散ポートフォリオは等配分より低リスク（ほとんどの場合）"""
+        """Minimum-variance portfolio should be lower risk than equal weights in most cases."""
         mv_result = loaded_calculator.optimize_min_variance_portfolio()
         equal_w = np.array([1/3, 1/3, 1/3])
         equal_metrics = loaded_calculator.calculate_portfolio_metrics(equal_w)
-        # 最小分散のリスク <= 等配分のリスク
+        # Minimum-variance risk should be less than or equal to equal-weight risk.
         assert mv_result['metrics']['risk'] <= equal_metrics['risk'] + 1e-6
 
 
@@ -200,7 +200,7 @@ class TestCalculateEfficientFrontier:
 
     def test_num_portfolios(self, app_context, loaded_calculator):
         ef = loaded_calculator.calculate_efficient_frontier(num_portfolios=10)
-        # 全てが成功するとは限らないが、少なくとも一部は生成される
+        # Not every optimization must succeed, but at least some portfolios should be generated.
         assert len(ef) > 0
         assert len(ef) <= 10
 
@@ -313,7 +313,7 @@ class TestAnalyzeMonteCarloResults:
     def test_confidence_intervals(self, app_context, loaded_calculator, sample_mc_results):
         analysis = loaded_calculator.analyze_monte_carlo_results(sample_mc_results)
         ci = analysis['confidence_intervals']
-        # 95% CI の lower < upper
+        # In the 95% CI, lower should be less than upper.
         assert ci['return_ci_95'][0] < ci['return_ci_95'][1]
         assert ci['risk_ci_95'][0] < ci['risk_ci_95'][1]
 
@@ -377,7 +377,7 @@ class TestHelperMethods:
         assert result['max_change'] == 0
 
     def test_calculate_stability_zero_mean(self, app_context, loaded_calculator):
-        # mean=0 → cv=inf
+        # mean=0 -> cv=inf
         result = loaded_calculator._calculate_stability([0.1, -0.1])
         assert result['coefficient_of_variation'] == float('inf') or result['coefficient_of_variation'] > 0
 

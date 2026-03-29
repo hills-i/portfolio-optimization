@@ -1,4 +1,4 @@
-/* メインスタイル */
+/* Main styles */
 :root {
     --primary-color: #0d6efd;
     --secondary-color: #6c757d;
@@ -16,12 +16,12 @@ body {
     min-height: 100vh;
 }
 
-/* ナビゲーション */
+/* Navigation */
 .navbar-brand {
     font-weight: 600;
 }
 
-/* カード */
+/* Cards */
 .card {
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
     border: none;
@@ -34,7 +34,7 @@ body {
     font-weight: 600;
 }
 
-/* フォーム */
+/* Forms */
 .form-control {
     border-radius: 0.375rem;
     border: 1px solid #dee2e6;
@@ -51,7 +51,7 @@ body {
     margin-bottom: 0.5rem;
 }
 
-/* ボタン */
+/* Buttons */
 .btn {
     border-radius: 0.375rem;
     font-weight: 500;
@@ -68,13 +68,13 @@ body {
     border-color: #0a58ca;
 }
 
-/* アラート */
+/* Alerts */
 .alert {
     border-radius: 0.5rem;
     border: none;
 }
 
-/* ティッカー入力エリア */
+/* Ticker input area */
 .ticker-input-group {
     margin-bottom: 1rem;
 }
@@ -107,7 +107,7 @@ body {
     color: white;
 }
 
-/* 日付入力 */
+/* Date input */
 .date-input-group .form-control {
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 1v2m6-2v2M2 5h12M3 3h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z'/%3e%3c/svg%3e");
     background-repeat: no-repeat;
@@ -116,7 +116,7 @@ body {
     padding-right: 2.5rem;
 }
 
-/* レンジスライダー */
+/* Range slider */
 .range-input-group {
     display: flex;
     align-items: center;
@@ -134,7 +134,7 @@ body {
     color: var(--primary-color);
 }
 
-/* 分析結果エリア */
+/* Analysis results area */
 .results-container {
     display: none;
     position: absolute;
@@ -150,7 +150,7 @@ body {
     animation: fadeInUp 0.5s ease-out;
 }
 
-/* 結果表示エリアのコンテナ用スタイル */
+/* Container styles for the results area */
 .col-lg-8.col-md-12 {
     position: relative;
 }
@@ -166,7 +166,7 @@ body {
     }
 }
 
-/* グラフコンテナ */
+/* Chart container */
 .chart-container {
     min-height: 400px;
     background-color: white;
@@ -175,7 +175,7 @@ body {
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 
-/* 資産配分タブ用ナビゲーション */
+/* Asset allocation tab navigation */
 #allocationTabs .nav-link {
     border-radius: 0.375rem;
     border: 1px solid #dee2e6;
@@ -196,18 +196,18 @@ body {
     border-color: var(--primary-color);
 }
 
-/* 資産配分チャートエリア */
+/* Asset allocation chart area */
 #allocation .chart-container {
     min-height: 400px;
     height: auto;
 }
 
-/* タブコンテンツ内のチャートコンテナ */
+/* Chart container inside tab content */
 #allocationTabContent .chart-container {
     min-height: 400px;
 }
 
-/* データタブ用スタイリング */
+/* Data tab styling */
 #dataTabs .nav-link {
     border-radius: 0.375rem;
     border: 1px solid #dee2e6;
@@ -228,12 +228,12 @@ body {
     border-color: var(--success-color);
 }
 
-/* メトリクステーブル用スタイル */
+/* Metrics table styles */
 .metrics-neutral {
     color: var(--secondary-color);
 }
 
-/* データテーブル内の値スタイル */
+/* Value styles inside data tables */
 .data-table .metrics-positive {
     color: var(--success-color);
     font-weight: 600;
@@ -248,7 +248,7 @@ body {
     color: var(--secondary-color);
 }
 
-/* レスポンシブ対応 */
+/* Responsive adjustments */
 @media (max-width: 768px) {
     #allocationTabs, #dataTabs {
         flex-direction: column;
@@ -265,7 +265,7 @@ body {
     }
 }
 
-/* タブ */
+/* Tabs */
 .nav-tabs {
     border-bottom: 2px solid #dee2e6;
 }
@@ -288,7 +288,7 @@ body {
     color: var(--primary-color);
 }
 
-/* データテーブル */
+/* Data tables */
 .data-table {
     font-size: 0.9rem;
 }
@@ -303,14 +303,14 @@ body {
     vertical-align: middle;
 }
 
-/* サマリーカード */
+/* Summary cards */
 #summaryCards {
     margin-top: 1.5rem;
     margin-left: 0.75rem;
     margin-right: 0.75rem;
 }
 
-/* メトリクスカード */
+/* Metric cards */
 .metrics-card {
     text-align: center;
     padding: 1.5rem;
@@ -336,7 +336,7 @@ body {
     color: var(--danger-color);
 }
 
-/* ローディング */
+/* Loading */
 .loading-spinner {
     display: inline-block;
     width: 1rem;
@@ -353,7 +353,7 @@ body {
     }
 }
 
-/* プログレスバー */
+/* Progress bar */
 .progress {
     height: 1rem;
     border-radius: 0.5rem;
@@ -364,7 +364,7 @@ body {
     line-height: 1rem;
 }
 
-/* Flexboxレイアウト - フッター対応 */
+/* Flexbox layout for sticky footer support */
 body {
     min-height: 100vh;
     display: flex;
@@ -372,14 +372,14 @@ body {
 }
 
 main {
-    flex: 1; /* 残りスペースを自動占有 */
+    flex: 1; /* Automatically take up the remaining space. */
 }
 
 footer {
-    margin-top: auto; /* 自動的に下部に配置 */
+    margin-top: auto; /* Push the footer to the bottom automatically. */
 }
 
-/* レスポンシブ */
+/* Responsive */
 @media (max-width: 768px) {
     .container-fluid {
         padding-left: 1rem;
@@ -411,7 +411,7 @@ footer {
     
 }
 
-/* バリデーションスタイル */
+/* Validation styles */
 .is-valid {
     border-color: var(--success-color) !important;
 }
@@ -433,12 +433,12 @@ footer {
     color: var(--danger-color);
 }
 
-/* ツールチップ */
+/* Tooltips */
 .tooltip {
     font-size: 0.875rem;
 }
 
-/* アニメーション */
+/* Animations */
 .fade-in {
     animation: fadeIn 0.3s ease-in;
 }

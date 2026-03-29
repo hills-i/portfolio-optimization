@@ -1,5 +1,5 @@
 """
-共通テストフィクスチャ
+Common test fixtures.
 """
 import sys
 import os
@@ -7,13 +7,13 @@ import pytest
 import numpy as np
 import pandas as pd
 
-# src ディレクトリをパスに追加
+# Add the src directory to the import path.
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 
 @pytest.fixture
 def app():
-    """テスト用Flaskアプリケーション"""
+    """Test Flask application."""
     from app import create_app
     app = create_app('development')
     app.config['TESTING'] = True
@@ -23,27 +23,27 @@ def app():
 
 @pytest.fixture
 def client(app):
-    """テスト用Flaskクライアント"""
+    """Test Flask client."""
     return app.test_client()
 
 
 @pytest.fixture
 def app_context(app):
-    """リクエストコンテキスト（flask_babel.gettext がsessionを参照するため必須）"""
+    """Request context required because flask_babel.gettext reads session."""
     with app.test_request_context():
         yield
 
 
 @pytest.fixture
 def request_context(app):
-    """リクエストコンテキスト（sessionを使用する場合）"""
+    """Request context for tests that use session."""
     with app.test_request_context():
         yield
 
 
 @pytest.fixture
 def mock_config():
-    """バリデーション用モックコンフィグ"""
+    """Mock config for validation tests."""
     class MockConfig:
         MIN_ASSETS = 2
         MAX_ASSETS = 20
@@ -56,11 +56,11 @@ def mock_config():
 
 @pytest.fixture
 def sample_price_data():
-    """テスト用株価データ（3銘柄×100日）"""
+    """Sample stock price data for tests (3 tickers x 100 days)."""
     np.random.seed(42)
     dates = pd.bdate_range(start='2024-01-02', periods=100)
     
-    # ランダムウォークで模擬株価を生成
+    # Generate simulated prices with a random walk.
     prices = {}
     for ticker, start_price in [('AAPL', 150.0), ('GOOGL', 140.0), ('MSFT', 380.0)]:
         daily_returns = np.random.normal(0.0005, 0.02, 100)
@@ -73,13 +73,13 @@ def sample_price_data():
 
 @pytest.fixture
 def sample_returns_data(sample_price_data):
-    """テスト用日次リターンデータ"""
+    """Sample daily return data for tests."""
     return sample_price_data.pct_change().dropna()
 
 
 @pytest.fixture
 def loaded_calculator(sample_price_data):
-    """データ読み込み済みのPortfolioCalculator"""
+    """PortfolioCalculator with data already loaded."""
     from app.utils.calculator import PortfolioCalculator
     calc = PortfolioCalculator()
     calc.load_data(sample_price_data, risk_free_rate=0.01)
@@ -88,14 +88,14 @@ def loaded_calculator(sample_price_data):
 
 @pytest.fixture
 def sample_mc_results(loaded_calculator):
-    """テスト用モンテカルロシミュレーション結果"""
+    """Sample Monte Carlo simulation results for tests."""
     np.random.seed(42)
     return loaded_calculator.monte_carlo_simulation(500)
 
 
 @pytest.fixture
 def sample_analysis_results(loaded_calculator, sample_mc_results):
-    """テスト用の完全な分析結果（API / Visualizer テスト用）"""
+    """Complete sample analysis results for API and visualizer tests."""
     np.random.seed(42)
     
     asset_stats = loaded_calculator.calculate_asset_statistics()

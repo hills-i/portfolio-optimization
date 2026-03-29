@@ -9,7 +9,7 @@ from flask_babel import gettext as _
 logger = logging.getLogger(__name__)
 
 class DataFetcher:
-    """金融データ取得クラス"""
+    """Fetcher for financial market data."""
     
     def __init__(self, timeout: int = 30):
         self.timeout = timeout
@@ -20,21 +20,21 @@ class DataFetcher:
                         end_date: str,
                         progress_callback: Optional[callable] = None) -> Dict[str, Any]:
         """
-        株価データの取得
+        Fetch stock price data.
         
         Args:
-            tickers: ティッカーシンボルのリスト
-            start_date: 開始日 (YYYY-MM-DD形式)
-            end_date: 終了日 (YYYY-MM-DD形式)
-            progress_callback: 進捗コールバック関数
+            tickers: List of ticker symbols.
+            start_date: Start date in YYYY-MM-DD format.
+            end_date: End date in YYYY-MM-DD format.
+            progress_callback: Optional progress callback function.
             
         Returns:
-            Dict: 取得結果
+            Dict: Retrieval result.
                 - success: bool
-                - data: pd.DataFrame (成功時)
-                - errors: List[str] (失敗時)
+                - data: pd.DataFrame (on success)
+                - errors: List[str] (on failure)
                 - warnings: List[str]
-                - metadata: Dict (取得情報)
+                - metadata: Dict (retrieval metadata)
         """
         result = {
             'success': False,
@@ -55,10 +55,10 @@ class DataFetcher:
             if progress_callback:
                 progress_callback(_('Starting data retrieval...'), 0)
             
-            # ティッカーシンボルを大文字に統一
+            # Normalize ticker symbols to uppercase.
             tickers = [ticker.upper() for ticker in tickers]
             
-            # データ取得
+            # Retrieve data
             stock_data = {}
             successful_tickers = []
             failed_tickers = []
@@ -66,10 +66,10 @@ class DataFetcher:
             for i, ticker in enumerate(tickers):
                 try:
                     if progress_callback:
-                        progress = int((i / len(tickers)) * 70)  # 70%まで
+                        progress = int((i / len(tickers)) * 70)  # Up to 70%
                         progress_callback(_('Retrieving data for %s...') % ticker, progress)
                     
-                    # yfinanceでデータ取得
+                    # Retrieve data with yfinance.
                     stock = yf.Ticker(ticker)
                     hist = stock.history(start=start_date, end=end_date, timeout=self.timeout)
                     
@@ -78,11 +78,11 @@ class DataFetcher:
                         logger.warning(f"No data found for ticker: {ticker}")
                         continue
                     
-                    # 終値データのみ抽出
+                    # Keep only closing prices.
                     closes = hist['Close']
                     closes = closes.dropna()
                     
-                    if len(closes) < 20:  # 最低20日分のデータが必要
+                    if len(closes) < 20:  # At least 20 days of data are required.
                         failed_tickers.append(ticker)
                         result['warnings'].append(_('%s: Insufficient data (days retrieved: %d)') % (ticker, len(closes)))
                         continue
@@ -98,27 +98,27 @@ class DataFetcher:
             if progress_callback:
                 progress_callback(_('Consolidating data...'), 75)
             
-            # 成功したティッカーが少なすぎる場合
+            # Stop if too few tickers were fetched successfully.
             if len(successful_tickers) < 2:
                 result['errors'].append(_('Less than 2 assets have valid data available'))
                 result['metadata']['tickers_success'] = successful_tickers
                 result['metadata']['tickers_failed'] = failed_tickers
                 return result
             
-            # データフレームの作成
+            # Build the DataFrame.
             price_data = pd.DataFrame(stock_data)
             
-            # 欠損データの処理
+            # Handle missing data.
             price_data = self._handle_missing_data(price_data)
             
             if progress_callback:
                 progress_callback(_('Preprocessing data...'), 90)
             
-            # データ品質チェック
+            # Run data quality checks.
             quality_issues = self._check_data_quality(price_data)
             result['warnings'].extend(quality_issues)
             
-            # 成功時の結果設定
+            # Populate the success result.
             result['success'] = True
             result['data'] = price_data
             result['metadata'].update({
@@ -131,7 +131,7 @@ class DataFetcher:
                 }
             })
             
-            # 失敗したティッカーについての警告
+            # Add warnings for failed tickers.
             if failed_tickers:
                 result['warnings'].append(_('Failed to retrieve data for the following assets: %s') % ', '.join(failed_tickers))
             
@@ -148,71 +148,71 @@ class DataFetcher:
     
     def _handle_missing_data(self, data: pd.DataFrame) -> pd.DataFrame:
         """
-        欠損データの処理
+        Handle missing data.
         
         Args:
-            data: 価格データのDataFrame
+            data: Price data DataFrame.
             
         Returns:
-            pd.DataFrame: 処理後のDataFrame
+            pd.DataFrame: Processed DataFrame.
         """
-        # 前方補完
+        # Forward fill.
         data = data.ffill()
         
-        # 後方補完（最初の値が欠損の場合）
+        # Backward fill for cases where the first value is missing.
         data = data.bfill()
         
-        # 共通の日付のみ抽出（全銘柄でデータが存在する日付）
+        # Keep only dates where every ticker has data.
         data = data.dropna(axis=0, how='any')
         
         return data
     
     def _check_data_quality(self, data: pd.DataFrame) -> List[str]:
         """
-        データ品質のチェック
+        Check data quality.
         
         Args:
-            data: 価格データのDataFrame
+            data: Price data DataFrame.
             
         Returns:
-            List[str]: 品質に関する警告メッセージのリスト
+            List[str]: Warning messages related to data quality.
         """
         warnings = []
         
-        # 各銘柄について品質チェック
+        # Run quality checks for each ticker.
         for ticker in data.columns:
             prices = data[ticker]
             
-            # 価格の極端な変動チェック
+            # Check for extreme price movements.
             returns = prices.pct_change().dropna()
-            extreme_returns = returns[abs(returns) > 0.5]  # 50%以上の変動
+            extreme_returns = returns[abs(returns) > 0.5]  # Price moves above 50%
             
             if len(extreme_returns) > 0:
                 warnings.append(_('%s: Extreme price movements detected (%d days)') % (ticker, len(extreme_returns)))
             
-            # ゼロ価格のチェック
+            # Check for zero prices.
             zero_prices = (prices <= 0).sum()
             if zero_prices > 0:
                 warnings.append(_('%s: Zero or negative prices detected (%d days)') % (ticker, zero_prices))
             
-            # データの連続性チェック
+            # Check data continuity.
             business_days = pd.bdate_range(start=data.index.min(), end=data.index.max())
             
             missing_ratio = 1 - (len(data) / len(business_days))
-            if missing_ratio > 0.1:  # 10%以上のデータ欠損
+            if missing_ratio > 0.1:  # More than 10% missing business days
                 warnings.append(_('%s: High data missing ratio detected (missing: %s)') % (ticker, f'{missing_ratio:.1%}'))
         
         return warnings
     
     def get_ticker_info(self, ticker: str) -> Dict[str, Any]:
         """
-        ティッカーの基本情報を取得
+        Fetch basic information for a ticker.
         
         Args:
-            ticker: ティッカーシンボル
+            ticker: Ticker symbol.
             
         Returns:
-            Dict: ティッカー情報
+            Dict: Ticker information.
         """
         try:
             stock = yf.Ticker(ticker.upper())
@@ -237,20 +237,20 @@ class DataFetcher:
     
     def validate_tickers(self, tickers: List[str]) -> Dict[str, bool]:
         """
-        ティッカーシンボルの存在確認
+        Check whether ticker symbols exist.
         
         Args:
-            tickers: ティッカーシンボルのリスト
+            tickers: List of ticker symbols.
             
         Returns:
-            Dict: {ticker: is_valid} の辞書
+            Dict: Mapping of {ticker: is_valid}.
         """
         result = {}
         
         for ticker in tickers:
             try:
                 stock = yf.Ticker(ticker.upper())
-                # 直近1週間のデータを試しに取得
+                # Try fetching one week of recent data.
                 test_data = stock.history(period="1wk", timeout=10)
                 result[ticker] = not test_data.empty
             except Exception:

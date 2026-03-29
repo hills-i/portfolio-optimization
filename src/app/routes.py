@@ -1,17 +1,17 @@
 from flask import Blueprint, render_template, jsonify, session, request, redirect, url_for
 from flask_babel import get_locale
 
-# メインルート用のブループリント
+# Blueprint for the main routes.
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def index():
-    """デフォルトルート - 英語にリダイレクト"""
+    """Default route that redirects to English."""
     return redirect(url_for('main.index_lang', lang='en'))
 
 @main_bp.route('/<lang>/')
 def index_lang(lang):
-    """言語付きメインページ"""
+    """Main page with an explicit language code."""
     if lang not in ['en', 'ja']:
         return redirect(url_for('main.index_lang', lang='en'))
     

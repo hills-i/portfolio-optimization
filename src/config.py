@@ -1,37 +1,40 @@
 import os
 
+DEV_SECRET_KEY = 'dev-secret-key-change-in-production'
+
 class Config:
-    """基本設定クラス"""
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    """Base configuration class."""
+    SECRET_KEY = os.environ.get('SECRET_KEY')
     
-    # データベース設定
+    # Database settings
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///portfolio.db'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-    # セッション設定
-    SESSION_TIMEOUT = 3600  # 1時間
+    # Session settings
+    SESSION_TIMEOUT = 3600  # 1 hour
     
-    # データ取得設定
-    DATA_FETCH_TIMEOUT = 30  # 30秒
+    # Data retrieval settings
+    DATA_FETCH_TIMEOUT = 30  # 30 seconds
     
-    # 計算設定
-    DEFAULT_RISK_FREE_RATE = 0.01  # 1% (日本国債10年物の参考値)
+    # Calculation settings
+    DEFAULT_RISK_FREE_RATE = 0.01  # 1% (reference value based on 10-year Japanese government bonds)
     DEFAULT_SIMULATION_COUNT = 10000
     MIN_SIMULATION_COUNT = 1000
     MAX_SIMULATION_COUNT = 50000
     
-    # バリデーション設定
+    # Validation settings
     MIN_ASSETS = 2
     MAX_ASSETS = 20
     MIN_ANALYSIS_YEARS = 1
     MAX_ANALYSIS_YEARS = 31
 
 class DevelopmentConfig(Config):
-    """開発環境設定"""
+    """Development environment configuration."""
     DEBUG = True
+    SECRET_KEY = os.environ.get('SECRET_KEY') or DEV_SECRET_KEY
 
 class ProductionConfig(Config):
-    """本番環境設定"""
+    """Production environment configuration."""
     DEBUG = False
 
 config = {

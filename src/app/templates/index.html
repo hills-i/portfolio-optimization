@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="row">
-    <!-- 入力パネル -->
+    <!-- Input panel -->
     <div class="col-lg-4 col-md-12 mb-4">
         <div class="card h-100">
             <div class="card-header">
@@ -14,7 +14,7 @@
             </div>
             <div class="card-body">
                 <form id="portfolioForm">
-                    <!-- ティッカーシンボル入力 -->
+                    <!-- Ticker symbol input -->
                     <div class="mb-3">
                         <label class="form-label">
                             {{ _('Ticker Symbols') }}
@@ -24,7 +24,7 @@
                                title="{{ _('Enter ticker symbols for assets to analyze (e.g., AAPL, 7203.T)') }}"></i>
                         </label>
                         <div id="tickerInputs">
-                            <!-- 動的に追加される -->
+                            <!-- Added dynamically -->
                         </div>
                         <button type="button" class="btn btn-outline-primary btn-sm btn-add-ticker w-100" 
                                 onclick="addTickerInput()">
@@ -33,7 +33,7 @@
                         <small class="form-text text-muted">{{ _('2-20 assets can be entered') }}</small>
                     </div>
 
-                    <!-- 分析期間 -->
+                    <!-- Analysis period -->
                     <div class="mb-3">
                         <label class="form-label">
                             {{ _('Analysis Period') }}
@@ -52,7 +52,7 @@
                         <small class="form-text text-muted">{{ _('Minimum 1 year, maximum 30 years') }}</small>
                     </div>
 
-                    <!-- 無リスク金利 -->
+                    <!-- Risk-free rate -->
                     <div class="mb-3">
                         <label for="riskFreeRate" class="form-label">
                             {{ _('Risk-free Rate (Annual %)') }}
@@ -70,7 +70,7 @@
                         <input type="hidden" id="riskFreeRate" name="risk_free_rate" value="0.005">
                     </div>
 
-                    <!-- 目標リターン（オプション） -->
+                    <!-- Target return (optional) -->
                     <div class="mb-3">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="enableTargetReturn">
@@ -91,7 +91,7 @@
                         </div>
                     </div>
 
-                    <!-- シミュレーション回数 -->
+                    <!-- Simulation count -->
                     <div class="mb-3">
                         <label for="simulationCount" class="form-label">
                             {{ _('Simulation Count') }}
@@ -109,7 +109,7 @@
                         <input type="hidden" id="simulationCount" name="simulation_count" value="10000">
                     </div>
 
-                    <!-- 実行ボタン -->
+                    <!-- Action buttons -->
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary btn-lg">
                             <i class="bi bi-play-circle me-2"></i>{{ _('Start Analysis') }}
@@ -123,9 +123,9 @@
         </div>
     </div>
 
-    <!-- 結果表示エリア -->
+    <!-- Results area -->
     <div class="col-lg-8 col-md-12">
-        <!-- 分析前のプレースホルダー -->
+        <!-- Placeholder before analysis -->
         <div id="placeholderArea" class="card h-100 d-flex align-items-center justify-content-center">
             <div class="text-center text-muted">
                 <i class="bi bi-graph-up-arrow" style="font-size: 4rem; opacity: 0.3;"></i>
@@ -134,14 +134,14 @@
             </div>
         </div>
 
-        <!-- 結果表示エリア -->
+        <!-- Results display area -->
         <div id="resultsArea" class="card results-container">
-            <!-- サマリーカード -->
+            <!-- Summary cards -->
             <div class="row mb-4" id="summaryCards">
-                <!-- 動的に生成される -->
+                <!-- Generated dynamically -->
             </div>
 
-            <!-- タブ付きグラフエリア -->
+            <!-- Tabbed chart area -->
             <div class="card">
                 <div class="card-header">
                     <ul class="nav nav-tabs card-header-tabs" id="resultTabs" role="tablist">
@@ -185,16 +185,16 @@
                 </div>
                 <div class="card-body">
                     <div class="tab-content" id="resultTabContent">
-                        <!-- 効率的フロンティア -->
+                        <!-- Efficient frontier -->
                         <div class="tab-pane fade show active" id="frontier" role="tabpanel">
                             <div class="chart-container">
                                 <div id="frontierChart"></div>
                             </div>
                         </div>
                         
-                        <!-- 資産配分 -->
+                        <!-- Asset allocation -->
                         <div class="tab-pane fade" id="allocation" role="tabpanel">
-                            <!-- 資産配分タブナビゲーション -->
+                            <!-- Asset allocation tab navigation -->
                             <ul class="nav nav-pills mb-3" id="allocationTabs" role="tablist">
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link active" id="max-sharpe-tab" data-bs-toggle="pill" 
@@ -219,9 +219,9 @@
                                 </li>
                             </ul>
                             
-                            <!-- 資産配分タブコンテンツ -->
+                            <!-- Asset allocation tab content -->
                             <div class="tab-content" id="allocationTabContent">
-                                <!-- 最大シャープレシオ -->
+                                <!-- Maximum Sharpe ratio -->
                                 <div class="tab-pane fade show active" id="max-sharpe-allocation" role="tabpanel" 
                                      aria-labelledby="max-sharpe-tab">
                                     <div class="row">
@@ -238,7 +238,7 @@
                                     </div>
                                 </div>
                                 
-                                <!-- 最小分散 -->
+                                <!-- Minimum variance -->
                                 <div class="tab-pane fade" id="min-variance-allocation" role="tabpanel" 
                                      aria-labelledby="min-variance-tab">
                                     <div class="row">
@@ -255,7 +255,7 @@
                                     </div>
                                 </div>
                                 
-                                <!-- 目標リターン達成 -->
+                                <!-- Target return achievement -->
                                 <div class="tab-pane fade" id="target-return-allocation" role="tabpanel" 
                                      aria-labelledby="target-return-tab">
                                     <div class="row">
@@ -274,24 +274,24 @@
                             </div>
                         </div>
                         
-                        <!-- 相関分析 -->
+                        <!-- Correlation analysis -->
                         <div class="tab-pane fade" id="correlation" role="tabpanel">
                             <div class="chart-container">
                                 <div id="correlationChart"></div>
                             </div>
                         </div>
                         
-                        <!-- 個別資産 -->
+                        <!-- Individual assets -->
                         <div class="tab-pane fade" id="assets" role="tabpanel">
                             <div class="chart-container">
                                 <div id="assetsChart"></div>
                             </div>
                         </div>
                         
-                        <!-- シミュレーション詳細 -->
+                        <!-- Simulation details -->
                         <div class="tab-pane fade" id="simulation" role="tabpanel">
                             <div class="row">
-                                <!-- 基本統計量 -->
+                                <!-- Basic statistics -->
                                 <div class="col-lg-6 mb-4">
                                     <div class="card h-100">
                                         <div class="card-header">
@@ -299,13 +299,13 @@
                                         </div>
                                         <div class="card-body">
                                             <div class="row" id="basicStatsContent">
-                                                <!-- 動的に生成 -->
+                                                <!-- Generated dynamically -->
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <!-- パーセンタイル分析 -->
+                                <!-- Percentile analysis -->
                                 <div class="col-lg-6 mb-4">
                                     <div class="card h-100">
                                         <div class="card-header">
@@ -323,7 +323,7 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <!-- 動的に生成 -->
+                                                        <!-- Generated dynamically -->
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -331,7 +331,7 @@
                                     </div>
                                 </div>
                                 
-                                <!-- 配分分布テールパーセンタイル -->
+                                <!-- Allocation distribution tail percentiles -->
                                 <div class="col-lg-6 mb-4">
                                     <div class="card h-100">
                                         <div class="card-header">
@@ -339,13 +339,13 @@
                                         </div>
                                         <div class="card-body">
                                             <div id="varAnalysisContent">
-                                                <!-- 動的に生成 -->
+                                                <!-- Generated dynamically -->
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <!-- 信頼区間 -->
+                                <!-- Confidence intervals -->
                                 <div class="col-lg-6 mb-4">
                                     <div class="card h-100">
                                         <div class="card-header">
@@ -353,13 +353,13 @@
                                         </div>
                                         <div class="card-body">
                                             <div id="confidenceIntervalsContent">
-                                                <!-- 動的に生成 -->
+                                                <!-- Generated dynamically -->
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <!-- 効率性指標 -->
+                                <!-- Efficiency metrics -->
                                 <div class="col-lg-12 mb-4">
                                     <div class="card">
                                         <div class="card-header">
@@ -367,13 +367,13 @@
                                         </div>
                                         <div class="card-body">
                                             <div class="row" id="efficiencyMetricsContent">
-                                                <!-- 動的に生成 -->
+                                                <!-- Generated dynamically -->
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 
-                                <!-- シミュレーション比較ボタン -->
+                                <!-- Simulation comparison button -->
                                 <div class="col-lg-12 mb-4">
                                     <div class="card">
                                         <div class="card-header">
@@ -385,7 +385,7 @@
                                                 <i class="bi bi-arrow-repeat me-2"></i>{{ _('Run Simulation Count Comparison') }}
                                             </button>
                                             <div id="simulationComparisonResult" class="mt-4" style="display: none;">
-                                                <!-- 比較結果が表示される -->
+                                                <!-- Comparison results appear here -->
                                             </div>
                                         </div>
                                     </div>
@@ -393,9 +393,9 @@
                             </div>
                         </div>
                         
-                        <!-- データテーブル -->
+                        <!-- Data tables -->
                         <div class="tab-pane fade" id="data" role="tabpanel">
-                            <!-- データテーブルタブナビゲーション -->
+                            <!-- Data table tab navigation -->
                             <ul class="nav nav-pills mb-3" id="dataTabs" role="tablist">
                                 <li class="nav-item" role="presentation">
                                     <button class="nav-link active" id="max-sharpe-data-tab" data-bs-toggle="pill" 
@@ -427,9 +427,9 @@
                                 </li>
                             </ul>
                             
-                            <!-- データテーブルタブコンテンツ -->
+                            <!-- Data table tab content -->
                             <div class="tab-content" id="dataTabContent">
-                                <!-- 最大シャープレシオデータ -->
+                                <!-- Maximum Sharpe ratio data -->
                                 <div class="tab-pane fade show active" id="max-sharpe-data" role="tabpanel" 
                                      aria-labelledby="max-sharpe-data-tab">
                                     <div class="row">
@@ -444,7 +444,7 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <!-- 動的に生成 -->
+                                                        <!-- Generated dynamically -->
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -460,7 +460,7 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <!-- 動的に生成 -->
+                                                        <!-- Generated dynamically -->
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -468,7 +468,7 @@
                                     </div>
                                 </div>
                                 
-                                <!-- 最小分散データ -->
+                                <!-- Minimum variance data -->
                                 <div class="tab-pane fade" id="min-variance-data" role="tabpanel" 
                                      aria-labelledby="min-variance-data-tab">
                                     <div class="row">
@@ -483,7 +483,7 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <!-- 動的に生成 -->
+                                                        <!-- Generated dynamically -->
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -499,7 +499,7 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <!-- 動的に生成 -->
+                                                        <!-- Generated dynamically -->
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -507,7 +507,7 @@
                                     </div>
                                 </div>
                                 
-                                <!-- 目標リターンデータ -->
+                                <!-- Target return data -->
                                 <div class="tab-pane fade" id="target-return-data" role="tabpanel" 
                                      aria-labelledby="target-return-data-tab">
                                     <div class="row">
@@ -522,7 +522,7 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <!-- 動的に生成 -->
+                                                        <!-- Generated dynamically -->
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -538,7 +538,7 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <!-- 動的に生成 -->
+                                                        <!-- Generated dynamically -->
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -546,7 +546,7 @@
                                     </div>
                                 </div>
                                 
-                                <!-- 個別資産統計データ -->
+                                <!-- Individual asset statistics data -->
                                 <div class="tab-pane fade" id="asset-stats-data" role="tabpanel" 
                                      aria-labelledby="asset-stats-data-tab">
                                     <div class="row">
@@ -563,7 +563,7 @@
                                                         </tr>
                                                     </thead>
                                                     <tbody>
-                                                        <!-- 動的に生成 -->
+                                                        <!-- Generated dynamically -->
                                                     </tbody>
                                                 </table>
                                             </div>
@@ -583,7 +583,7 @@
                         </div>
                         <div class="col-md-6 text-end">
                             <small class="text-muted" id="analysisTime">
-                                <!-- 分析時刻を表示 -->
+                                <!-- Analysis timestamp appears here -->
                             </small>
                         </div>
                     </div>
@@ -597,7 +597,7 @@
 {% block extra_scripts %}
 <script src="{{ url_for('static', filename='js/portfolio.js') }}"></script>
 <script>
-    // 初期化
+    // Initialization
     document.addEventListener('DOMContentLoaded', function() {
         initializeApp();
     });

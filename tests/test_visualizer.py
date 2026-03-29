@@ -1,5 +1,5 @@
 """
-visualizer.py のテスト
+Tests for visualizer.py.
 """
 import pytest
 import json
@@ -75,7 +75,7 @@ class TestCreateAssetAllocationPlot:
         assert 'data' in parsed
 
     def test_small_weights_grouped(self, app_context):
-        """0.5% 未満は 'Others' にグループ化"""
+        """Weights below 0.5% are grouped into 'Others'."""
         from app.utils.visualizer import PortfolioVisualizer
         vis = PortfolioVisualizer()
 
@@ -137,7 +137,7 @@ class TestCreateSummaryDashboard:
 
         charts = vis.create_summary_dashboard(sample_analysis_results)
         assert isinstance(charts, dict)
-        # 主要キーが存在すること
+        # Ensure the primary chart keys are present.
         expected_keys = ['efficient_frontier', 'correlation_matrix', 'risk_return_scatter']
         for key in expected_keys:
             assert key in charts, f"Missing chart key: {key}"
@@ -152,7 +152,7 @@ class TestCreateSummaryDashboard:
             assert 'data' in parsed, f"Chart {key} missing 'data' key"
 
     def test_partial_results(self, app_context):
-        """一部データのみでもエラーにならないこと"""
+        """Partial data should not raise an error."""
         from app.utils.visualizer import PortfolioVisualizer
         vis = PortfolioVisualizer()
 

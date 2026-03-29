@@ -1,5 +1,5 @@
 """
-data_fetcher.py のテスト
+Tests for data_fetcher.py.
 """
 import pytest
 import pandas as pd
@@ -9,14 +9,14 @@ from datetime import datetime, timedelta
 
 
 class TestFetchStockData:
-    """DataFetcher.fetch_stock_data のテスト"""
+    """Tests for DataFetcher.fetch_stock_data."""
 
     def _make_fetcher(self):
         from app.utils.data_fetcher import DataFetcher
         return DataFetcher(timeout=10)
 
     def _mock_history(self, ticker, n_days=100, start_price=150.0):
-        """yfinance の history() が返すモック DataFrame を生成"""
+        """Create a mock DataFrame returned by yfinance.history()."""
         dates = pd.bdate_range(start='2023-01-02', periods=n_days)
         np.random.seed(hash(ticker) % 2**31)
         prices = start_price * np.cumprod(1 + np.random.normal(0.0005, 0.015, n_days))
@@ -25,7 +25,7 @@ class TestFetchStockData:
                              'Volume': np.random.randint(1e6, 1e7, n_days)},
                             index=dates)
 
-    # --- 正常系 ---
+    # --- Valid cases ---
     @patch('app.utils.data_fetcher.yf.Ticker')
     def test_fetch_success(self, mock_ticker_cls, request_context):
         def side_effect(ticker):
@@ -56,14 +56,14 @@ class TestFetchStockData:
                                  progress_callback=callback)
         assert callback.call_count > 0
 
-    # --- 一部失敗 ---
+    # --- Partial failure ---
     @patch('app.utils.data_fetcher.yf.Ticker')
     def test_partial_failure_still_success(self, mock_ticker_cls, request_context):
-        """3銘柄中1つ失敗 → 2銘柄残るので success"""
+        """One out of three tickers fails, leaving two, so success stays true."""
         def side_effect(ticker):
             m = MagicMock()
             if ticker == 'BAD':
-                m.history.return_value = pd.DataFrame()  # 空データ
+                m.history.return_value = pd.DataFrame()  # Empty data
             else:
                 m.history.return_value = self._mock_history(ticker)
             return m
@@ -76,7 +76,7 @@ class TestFetchStockData:
         assert 'BAD' in result['metadata']['tickers_failed']
         assert len(result['warnings']) > 0
 
-    # --- 全失敗 ---
+    # --- All fail ---
     @patch('app.utils.data_fetcher.yf.Ticker')
     def test_all_tickers_fail(self, mock_ticker_cls, request_context):
         def side_effect(ticker):
@@ -91,7 +91,7 @@ class TestFetchStockData:
         assert result['success'] is False
         assert len(result['errors']) > 0
 
-    # --- 2銘柄中1失敗で残り1 → success=False (< 2) ---
+    # --- One of two tickers fails, leaving one, so success=False (< 2) ---
     @patch('app.utils.data_fetcher.yf.Ticker')
     def test_insufficient_tickers_after_failure(self, mock_ticker_cls, request_context):
         def side_effect(ticker):
@@ -108,7 +108,7 @@ class TestFetchStockData:
 
         assert result['success'] is False
 
-    # --- データが少なすぎ (< 20日) ---
+    # --- Too little data (< 20 days) ---
     @patch('app.utils.data_fetcher.yf.Ticker')
     def test_insufficient_data_points(self, mock_ticker_cls, request_context):
         def side_effect(ticker):
@@ -119,10 +119,10 @@ class TestFetchStockData:
         mock_ticker_cls.side_effect = side_effect
         fetcher = self._make_fetcher()
         result = fetcher.fetch_stock_data(['AAPL', 'GOOGL'], '2023-01-01', '2023-01-15')
-        # 10日 < 20 → 両方失敗 → success=False
+        # 10 days < 20, so both fail and success becomes False.
         assert result['success'] is False
 
-    # --- 例外発生 ---
+    # --- Exception raised ---
     @patch('app.utils.data_fetcher.yf.Ticker')
     def test_exception_during_fetch(self, mock_ticker_cls, request_context):
         def side_effect(ticker):
@@ -137,7 +137,7 @@ class TestFetchStockData:
 
 
 class TestHandleMissingData:
-    """DataFetcher._handle_missing_data のテスト"""
+    """Tests for DataFetcher._handle_missing_data."""
 
     def _make_fetcher(self):
         from app.utils.data_fetcher import DataFetcher
@@ -164,12 +164,12 @@ class TestHandleMissingData:
 
         fetcher = self._make_fetcher()
         result = fetcher._handle_missing_data(data)
-        # bfill/ffillでも全NaN列は埋まらず、dropnaで全行削除される
+        # Even with bfill/ffill, an all-NaN column remains empty and dropna removes every row.
         assert len(result) == 0
 
 
 class TestCheckDataQuality:
-    """DataFetcher._check_data_quality のテスト"""
+    """Tests for DataFetcher._check_data_quality."""
 
     def _make_fetcher(self):
         from app.utils.data_fetcher import DataFetcher
@@ -206,13 +206,13 @@ class TestCheckDataQuality:
 
         fetcher = self._make_fetcher()
         warnings = fetcher._check_data_quality(data)
-        # 通常データでは extreme/zero 警告が出ないはず
+        # Normal data should not trigger extreme or zero warnings.
         extreme_or_zero = [w for w in warnings if 'Extreme' in str(w) or 'Zero' in str(w)]
         assert len(extreme_or_zero) == 0
 
 
 class TestGetTickerInfo:
-    """DataFetcher.get_ticker_info のテスト"""
+    """Tests for DataFetcher.get_ticker_info."""
 
     @patch('app.utils.data_fetcher.yf.Ticker')
     def test_success(self, mock_ticker_cls, request_context):
@@ -249,7 +249,7 @@ class TestGetTickerInfo:
 
 
 class TestValidateTickers:
-    """DataFetcher.validate_tickers のテスト"""
+    """Tests for DataFetcher.validate_tickers."""
 
     @patch('app.utils.data_fetcher.yf.Ticker')
     def test_valid_tickers(self, mock_ticker_cls, request_context):

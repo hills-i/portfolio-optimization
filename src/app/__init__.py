@@ -1,13 +1,22 @@
+import os
+
 from flask import Flask, session, g
 from flask_babel import Babel
-from config import config
+from config import config, DEV_SECRET_KEY
 
 def create_app(config_name='default'):
-    """Flask アプリケーションファクトリー"""
+    """Flask application factory."""
     app = Flask(__name__)
     app.config.from_object(config[config_name])
+
+    if config_name == 'production':
+        app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+        if not app.config['SECRET_KEY']:
+            raise RuntimeError('SECRET_KEY environment variable is required in production')
+    elif not app.config.get('SECRET_KEY'):
+        app.config['SECRET_KEY'] = DEV_SECRET_KEY
     
-    # Babel設定
+    # Babel configuration
     app.config['LANGUAGES'] = {
         'en': 'English',
         'ja': '日本語'
@@ -16,7 +25,7 @@ def create_app(config_name='default'):
     app.config['BABEL_DEFAULT_TIMEZONE'] = 'UTC'
     
     def get_locale():
-        # セッションから言語を取得
+        # Read the language from the session.
         if 'language' in session:
             return session['language']
         return app.config['BABEL_DEFAULT_LOCALE']
@@ -28,11 +37,11 @@ def create_app(config_name='default'):
     from flask_babel import gettext, ngettext
     app.jinja_env.globals.update(_=gettext, ngettext=ngettext)
     
-    # APIブループリントの登録
+    # Register the API blueprint.
     from app.api import bp as api_bp
     app.register_blueprint(api_bp, url_prefix='/api')
     
-    # メインルートの登録
+    # Register the main routes.
     from app.routes import main_bp
     app.register_blueprint(main_bp)
     

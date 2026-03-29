@@ -397,7 +397,7 @@ def create_visualizations():
                     elif chart_type == 'mathematical_efficient_frontier':
                         if ('efficient_frontier' in analysis_results and
                             'asset_statistics' in analysis_results):
-                            # 機能追加版を使用
+                            # Use the enhanced implementation.
                             charts[chart_type] = visualizer.create_working_efficient_frontier_plot(
                                 analysis_results['efficient_frontier'],
                                 analysis_results['asset_statistics'],

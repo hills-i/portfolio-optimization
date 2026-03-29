@@ -9,7 +9,7 @@ from flask_babel import gettext as _
 logger = logging.getLogger(__name__)
 
 class PortfolioCalculator:
-    """ポートフォリオ計算クラス"""
+    """Portfolio calculation class."""
     
     def __init__(self):
         self.returns = None
@@ -19,23 +19,23 @@ class PortfolioCalculator:
     
     def load_data(self, price_data: pd.DataFrame, risk_free_rate: float = 0.0) -> bool:
         """
-        価格データの読み込みと前処理
+        Load and preprocess price data.
         
         Args:
-            price_data: 価格データのDataFrame
-            risk_free_rate: 無リスク金利 (年率)
+            price_data: DataFrame containing price data.
+            risk_free_rate: Annual risk-free rate.
             
         Returns:
-            bool: 処理成功フラグ
+            bool: Whether processing succeeded.
         """
         try:
-            # 日次リターンの計算
+            # Calculate daily returns.
             self.returns = price_data.pct_change().dropna()
             
-            # 年率換算の期待リターン計算（252営業日）
+            # Calculate annualized expected returns (252 trading days).
             self.mean_returns = self.returns.mean() * 252
             
-            # 共分散行列計算（年率換算）
+            # Calculate the annualized covariance matrix.
             self.cov_matrix = self.returns.cov() * 252
             
             self.risk_free_rate = risk_free_rate
@@ -49,22 +49,22 @@ class PortfolioCalculator:
     
     def calculate_portfolio_metrics(self, weights: np.ndarray) -> Dict[str, float]:
         """
-        ポートフォリオの基本メトリクス計算
+        Calculate basic portfolio metrics.
         
         Args:
-            weights: 資産配分（合計=1）
+            weights: Asset weights that sum to 1.
             
         Returns:
-            Dict: ポートフォリオメトリクス
+            Dict: Portfolio metrics.
         """
-        # 期待リターン
+        # Expected return
         expected_return = np.sum(self.mean_returns * weights)
         
-        # リスク（標準偏差）
+        # Risk (standard deviation)
         portfolio_variance = np.dot(weights.T, np.dot(self.cov_matrix, weights))
         portfolio_risk = np.sqrt(portfolio_variance)
         
-        # シャープレシオ
+        # Sharpe ratio
         excess_return = expected_return - self.risk_free_rate
         sharpe_ratio = excess_return / portfolio_risk if portfolio_risk > 0 else 0
         
@@ -77,13 +77,13 @@ class PortfolioCalculator:
     
     def monte_carlo_simulation(self, num_simulations: int = 10000) -> pd.DataFrame:
         """
-        モンテカルロシミュレーション
+        Run a Monte Carlo simulation.
         
         Args:
-            num_simulations: シミュレーション回数
+            num_simulations: Number of simulations.
             
         Returns:
-            pd.DataFrame: シミュレーション結果
+            pd.DataFrame: Simulation results.
         """
         if self.returns is None:
             raise ValueError(_('Data not loaded. Call load_data() first.'))
@@ -92,16 +92,16 @@ class PortfolioCalculator:
         
         logger.info(f"Starting Monte Carlo simulation with {num_simulations} iterations")
         
-        # ベクトル化: 全ランダム重みを一括生成
+        # Vectorized generation of all random weights.
         weights_matrix = np.random.random((num_simulations, num_assets))
         weights_matrix = weights_matrix / weights_matrix.sum(axis=1, keepdims=True)
         
-        # デバッグ用：最初の5回のシミュレーションの重みをログ出力
+        # Log the first five simulation weights for debugging.
         for i in range(min(5, num_simulations)):
             weight_info = {asset: f"{weights_matrix[i, j]:.3f}" for j, asset in enumerate(self.mean_returns.index)}
             logger.info(f"Simulation {i+1} weights: {weight_info}")
         
-        # ベクトル化: ポートフォリオメトリクス一括計算
+        # Vectorized portfolio metric calculation.
         mean_returns_arr = self.mean_returns.values
         cov_matrix_arr = self.cov_matrix.values
         
@@ -114,7 +114,7 @@ class PortfolioCalculator:
             0
         )
         
-        # DataFrame構築
+        # Build the DataFrame.
         df = pd.DataFrame({
             'expected_return': expected_returns,
             'risk': portfolio_risks,
@@ -130,14 +130,14 @@ class PortfolioCalculator:
     
     def monte_carlo_simulation_returns(self, num_simulations: int = 10000, time_horizon: int = 252) -> pd.DataFrame:
         """
-        真のモンテカルロシミュレーション（将来リターンを確率的に予測）
+        Run a return-based Monte Carlo simulation for future returns.
         
         Args:
-            num_simulations: シミュレーション回数
-            time_horizon: 予測期間（営業日数、デフォルト1年=252日）
+            num_simulations: Number of simulations.
+            time_horizon: Forecast horizon in trading days (default: 1 year = 252).
             
         Returns:
-            pd.DataFrame: シミュレーション結果
+            pd.DataFrame: Simulation results.
         """
         if self.returns is None:
             raise ValueError(_('Data not loaded. Call load_data() first.'))
@@ -147,39 +147,39 @@ class PortfolioCalculator:
         
         logger.info(f"Starting return-based Monte Carlo simulation with {num_simulations} iterations")
         
-        # 固定された最適配分を使用（比較のため）
+        # Use a fixed optimal allocation for comparison purposes.
         optimal_result = self.optimize_portfolio()
         if optimal_result['success']:
             optimal_weights = np.array(list(optimal_result['weights'].values()))
         else:
-            # フォールバック：等配分
+            # Fallback to equal weights.
             optimal_weights = np.ones(num_assets) / num_assets
             
         logger.info(f"Using fixed weights for return simulation: {dict(zip(self.mean_returns.index, optimal_weights))}")
         
         for i in range(num_simulations):
-            # 将来リターンをランダムに生成（多変量正規分布から）
+            # Randomly generate future returns from a multivariate normal distribution.
             simulated_returns = np.random.multivariate_normal(
-                self.mean_returns.values / 252,  # 日次リターンに変換
-                self.cov_matrix.values / 252,    # 日次共分散に変換
+                self.mean_returns.values / 252,  # Convert to daily returns.
+                self.cov_matrix.values / 252,    # Convert to daily covariance.
                 time_horizon
             )
             
-            # 累積リターンを計算
+            # Calculate cumulative returns.
             cumulative_returns = np.prod(1 + simulated_returns, axis=0) - 1
             
-            # ポートフォリオリターンを計算（累積）
+            # Calculate cumulative portfolio return.
             portfolio_return = np.dot(optimal_weights, cumulative_returns)
             
-            # 累積リターンを年率化
+            # Annualize the cumulative return.
             years = time_horizon / 252
             annualized_return = (1 + portfolio_return) ** (1 / years) - 1 if years > 0 else portfolio_return
             
-            # ポートフォリオリスク（年率）
+            # Annualized portfolio risk.
             portfolio_variance = np.dot(optimal_weights.T, np.dot(self.cov_matrix, optimal_weights))
             portfolio_risk = np.sqrt(portfolio_variance)
             
-            # シャープレシオ（年率ベースで統一）
+            # Sharpe ratio on an annualized basis.
             sharpe_ratio = (annualized_return - self.risk_free_rate) / portfolio_risk if portfolio_risk > 0 else 0
             
             result = {
@@ -189,7 +189,7 @@ class PortfolioCalculator:
                 'simulation_type': 'return_based'
             }
             
-            # デバッグ用：最初の5回の結果をログ出力
+            # Log the first five results for debugging.
             if i < 5:
                 logger.info(f"Return simulation {i+1}: return={portfolio_return:.4f}, risk={portfolio_risk:.4f}")
             
@@ -202,29 +202,29 @@ class PortfolioCalculator:
     
     def optimize_min_variance_portfolio(self) -> Dict[str, Any]:
         """
-        最小分散ポートフォリオ最適化（制約なし）
+        Optimize the minimum-variance portfolio.
         
         Returns:
-            Dict: 最適化結果
+            Dict: Optimization result.
         """
         if self.returns is None:
             raise ValueError(_('Data not loaded. Call load_data() first.'))
         
         num_assets = len(self.mean_returns)
         
-        # 初期推定値（等重み）
+        # Initial estimate (equal weights).
         initial_weights = np.ones(num_assets) / num_assets
         
-        # 制約条件
-        constraints = [{'type': 'eq', 'fun': lambda x: np.sum(x) - 1}]  # 重みの合計=1
+        # Constraints
+        constraints = [{'type': 'eq', 'fun': lambda x: np.sum(x) - 1}]  # Weights must sum to 1.
         
-        # 境界条件（0 <= 重み <= 1、空売り制限）
+        # Bounds (0 <= weight <= 1, no short selling).
         bounds = tuple((0, 1) for _ in range(num_assets))
         
         try:
-            # 分散最小化（リターン制約なし）
+            # Minimize variance without a return constraint.
             def objective(weights):
-                return np.dot(weights, np.dot(self.cov_matrix, weights))  # ポートフォリオ分散
+                return np.dot(weights, np.dot(self.cov_matrix, weights))  # Portfolio variance
             
             result = minimize(
                 objective,
@@ -241,10 +241,10 @@ class PortfolioCalculator:
             
             optimal_weights = result.x
             
-            # 最適解のメトリクス計算
+            # Calculate metrics for the optimal solution.
             optimal_metrics = self.calculate_portfolio_metrics(optimal_weights)
             
-            # 結果をまとめる
+            # Assemble the result.
             optimization_result = {
                 'success': True,
                 'optimization_type': "min_variance",
@@ -268,52 +268,52 @@ class PortfolioCalculator:
     
     def optimize_portfolio(self, target_return: Optional[float] = None) -> Dict[str, Any]:
         """
-        ポートフォリオ最適化
+        Optimize the portfolio.
         
         Args:
-            target_return: 目標リターン（指定時は最小リスクポートフォリオ、未指定時は最大シャープレシオ）
+            target_return: Target return. If provided, optimize for minimum risk; otherwise, maximize Sharpe ratio.
             
         Returns:
-            Dict: 最適化結果
+            Dict: Optimization result.
         """
         if self.returns is None:
             raise ValueError(_('Data not loaded. Call load_data() first.'))
         
         num_assets = len(self.mean_returns)
         
-        # 初期値（等配分）
+        # Initial value (equal weights).
         initial_weights = np.array([1.0 / num_assets] * num_assets)
         
-        # 制約条件
-        constraints = [{'type': 'eq', 'fun': lambda x: np.sum(x) - 1}]  # 重みの合計=1
+        # Constraints
+        constraints = [{'type': 'eq', 'fun': lambda x: np.sum(x) - 1}]  # Weights must sum to 1.
         
-        # 目標リターン制約（指定時）
+        # Target return constraint (when provided).
         if target_return is not None:
             constraints.append({
                 'type': 'eq',
                 'fun': lambda x: np.sum(self.mean_returns * x) - target_return
             })
         
-        # 境界条件（0 <= 重み <= 1、空売り制限）
+        # Bounds (0 <= weight <= 1, no short selling).
         bounds = tuple((0, 1) for _ in range(num_assets))
         
         try:
             if target_return is None:
-                # 最大シャープレシオポートフォリオ
+                # Maximum Sharpe ratio portfolio
                 def objective(weights):
                     metrics = self.calculate_portfolio_metrics(weights)
-                    return -metrics['sharpe_ratio']  # 最大化のため負値
+                    return -metrics['sharpe_ratio']  # Negate for maximization.
                 
                 optimization_type = "max_sharpe"
             else:
-                # 最小分散ポートフォリオ
+                # Minimum-variance portfolio
                 def objective(weights):
                     metrics = self.calculate_portfolio_metrics(weights)
                     return metrics['variance']
                 
                 optimization_type = "min_risk"
             
-            # 最適化実行
+            # Run the optimization.
             result = minimize(
                 objective,
                 initial_weights,
@@ -326,13 +326,13 @@ class PortfolioCalculator:
             if not result.success:
                 logger.warning(f"Optimization may not have converged: {result.message}")
             
-            # 最適な重み
+            # Optimal weights
             optimal_weights = result.x
             
-            # 最適ポートフォリオのメトリクス計算
+            # Calculate metrics for the optimal portfolio.
             optimal_metrics = self.calculate_portfolio_metrics(optimal_weights)
             
-            # 結果をまとめる
+            # Assemble the result.
             optimization_result = {
                 'success': True,
                 'optimization_type': optimization_type,
@@ -356,20 +356,20 @@ class PortfolioCalculator:
     
     def calculate_efficient_frontier(self, num_portfolios: int = 50) -> pd.DataFrame:
         """
-        効率的フロンティアの計算
+        Calculate the efficient frontier.
         
         Args:
-            num_portfolios: 計算するポートフォリオ数
+            num_portfolios: Number of portfolios to compute.
             
         Returns:
-            pd.DataFrame: 効率的フロンティアのデータ
+            pd.DataFrame: Efficient frontier data.
         """
         if self.returns is None:
             raise ValueError(_('Data not loaded. Call load_data() first.'))
         
         logger.info(f"Calculating efficient frontier with {num_portfolios} portfolios")
         
-        # リターンの範囲を設定
+        # Define the return range.
         min_ret = self.mean_returns.min()
         max_ret = self.mean_returns.max()
         target_returns = np.linspace(min_ret, max_ret, num_portfolios)
@@ -388,7 +388,7 @@ class PortfolioCalculator:
                         'sharpe_ratio': result['metrics']['sharpe_ratio']
                     }
                     
-                    # 各資産の配分も追加
+                    # Add per-asset weights as well.
                     for asset, weight in result['weights'].items():
                         portfolio[f'weight_{asset}'] = weight
                     
@@ -408,10 +408,10 @@ class PortfolioCalculator:
     
     def calculate_asset_statistics(self) -> Dict[str, Dict[str, float]]:
         """
-        個別資産の統計情報計算
+        Calculate statistics for each asset.
         
         Returns:
-            Dict: 各資産の統計情報
+            Dict: Statistics for each asset.
         """
         if self.returns is None:
             raise ValueError(_('Data not loaded. Call load_data() first.'))
@@ -432,18 +432,18 @@ class PortfolioCalculator:
                 'kurtosis': asset_returns.kurtosis(),
                 'min_return': asset_returns.min(),
                 'max_return': asset_returns.max(),
-                'var_95': annual_mean - 1.645 * annual_std,  # 95% パラメトリックVaR（年率）
-                'var_99': annual_mean - 2.326 * annual_std   # 99% パラメトリックVaR（年率）
+                'var_95': annual_mean - 1.645 * annual_std,  # 95% parametric VaR (annualized)
+                'var_99': annual_mean - 2.326 * annual_std   # 99% parametric VaR (annualized)
             }
         
         return stats
     
     def calculate_correlation_matrix(self) -> pd.DataFrame:
         """
-        相関行列の計算
+        Calculate the correlation matrix.
         
         Returns:
-            pd.DataFrame: 相関行列
+            pd.DataFrame: Correlation matrix.
         """
         if self.returns is None:
             raise ValueError(_('Data not loaded. Call load_data() first.'))
@@ -452,30 +452,30 @@ class PortfolioCalculator:
     
     def risk_decomposition(self, weights) -> Dict[str, Any]:
         """
-        リスク分解分析
+        Perform risk decomposition analysis.
         
         Args:
-            weights: ポートフォリオの重み
+            weights: Portfolio weights.
             
         Returns:
-            Dict: リスク分解の結果
+            Dict: Risk decomposition result.
         """
         if self.returns is None:
             raise ValueError(_('Data not loaded. Call load_data() first.'))
         
-        # weightsをNumPy配列に変換
+        # Convert weights to a NumPy array.
         weights = np.array(weights)
         
-        # ポートフォリオの分散
+        # Portfolio variance
         portfolio_variance = np.dot(weights.T, np.dot(self.cov_matrix, weights))
         
-        # 各資産のマージナルリスク貢献度
+        # Marginal risk contribution of each asset
         marginal_contrib = np.dot(self.cov_matrix, weights) / np.sqrt(portfolio_variance)
         
-        # 各資産の実際のリスク貢献度
+        # Actual risk contribution of each asset
         risk_contrib = weights * marginal_contrib
         
-        # パーセンテージでの貢献度
+        # Contribution percentages
         risk_contrib_pct = risk_contrib / np.sum(risk_contrib)
         
         result = {
@@ -493,17 +493,17 @@ class PortfolioCalculator:
     
     def analyze_monte_carlo_results(self, mc_results: pd.DataFrame) -> Dict[str, Any]:
         """
-        モンテカルロシミュレーション結果の詳細分析
+        Perform detailed analysis of Monte Carlo results.
         
         Args:
-            mc_results: モンテカルロシミュレーションのDataFrame
+            mc_results: Monte Carlo simulation DataFrame.
             
         Returns:
-            Dict: 詳細分析結果
+            Dict: Detailed analysis results.
         """
         analysis = {}
         
-        # 基本統計量
+        # Basic statistics
         analysis['basic_stats'] = {
             'total_simulations': int(len(mc_results)),
             'return_stats': {
@@ -529,7 +529,7 @@ class PortfolioCalculator:
             }
         }
         
-        # パーセンタイル分析
+        # Percentile analysis
         percentiles = [5, 10, 25, 75, 90, 95]
         analysis['percentiles'] = {}
         for p in percentiles:
@@ -539,7 +539,7 @@ class PortfolioCalculator:
                 'sharpe': float(mc_results['sharpe_ratio'].quantile(p/100))
             }
         
-        # 配分分布のテールパーセンタイル（ランダム配分による期待リターン・リスクの分布）
+        # Tail percentiles for allocation-distribution outcomes.
         analysis['tail_percentiles'] = {
             'return_p5': float(mc_results['expected_return'].quantile(0.05)),
             'return_p1': float(mc_results['expected_return'].quantile(0.01)),
@@ -547,7 +547,7 @@ class PortfolioCalculator:
             'risk_p99': float(mc_results['risk'].quantile(0.99))
         }
         
-        # 信頼区間
+        # Confidence intervals
         analysis['confidence_intervals'] = {
             'return_ci_95': [
                 float(mc_results['expected_return'].quantile(0.025)),
@@ -567,7 +567,7 @@ class PortfolioCalculator:
             ]
         }
         
-        # 効率性指標
+        # Efficiency metrics
         analysis['efficiency_metrics'] = {
             'portfolios_above_rf': int(len(mc_results[mc_results['expected_return'] > self.risk_free_rate])),
             'portfolios_positive_sharpe': int(len(mc_results[mc_results['sharpe_ratio'] > 0])),
@@ -583,7 +583,7 @@ class PortfolioCalculator:
             }
         }
         
-        # リスク・リターンの散布分析
+        # Risk/return scatter analysis
         analysis['scatter_analysis'] = {
             'risk_return_correlation': float(mc_results['expected_return'].corr(mc_results['risk'])),
             'risk_clusters': self._analyze_risk_clusters(mc_results),
@@ -593,7 +593,7 @@ class PortfolioCalculator:
         return analysis
     
     def _analyze_risk_clusters(self, mc_results: pd.DataFrame) -> Dict[str, Any]:
-        """リスクレベル別のクラスタ分析"""
+        """Analyze clusters by risk level."""
         risk_quartiles = mc_results['risk'].quantile([0.25, 0.5, 0.75]).tolist()
         
         clusters = {
@@ -618,15 +618,15 @@ class PortfolioCalculator:
         return cluster_stats
     
     def _analyze_return_distribution(self, mc_results: pd.DataFrame) -> Dict[str, Any]:
-        """リターン分布の分析"""
+        """Analyze the return distribution."""
         from scipy import stats
         
         returns = mc_results['expected_return'].values
         
-        # 正規性検定
-        shapiro_stat, shapiro_p = stats.shapiro(returns[:5000])  # サンプルサイズ制限
+        # Normality test
+        shapiro_stat, shapiro_p = stats.shapiro(returns[:5000])  # Sample size limit
         
-        # 歪度と尖度
+        # Skewness and kurtosis
         skewness = stats.skew(returns)
         kurtosis = stats.kurtosis(returns)
         
@@ -648,13 +648,13 @@ class PortfolioCalculator:
     
     def compare_simulation_counts(self, counts: List[int]) -> Dict[str, Any]:
         """
-        異なるシミュレーション回数での結果比較
+        Compare results across different simulation counts.
         
         Args:
-            counts: 比較するシミュレーション回数のリスト
+            counts: List of simulation counts to compare.
             
         Returns:
-            Dict: 比較結果
+            Dict: Comparison result.
         """
         if self.returns is None:
             raise ValueError(_('Data not loaded. Call load_data() first.'))
@@ -671,22 +671,22 @@ class PortfolioCalculator:
                 'basic_stats': analysis['basic_stats'],
                 'confidence_intervals': analysis['confidence_intervals'],
                 'best_sharpe': analysis['efficiency_metrics']['best_sharpe_portfolio'],
-                'computation_time': None  # 実際の実装では時間測定を追加
+                'computation_time': None  # Add time measurement in a production implementation.
             }
         
-        # 収束性分析
+        # Convergence analysis
         comparison_results['convergence_analysis'] = self._analyze_convergence(comparison_results)
         
         return comparison_results
     
     def _analyze_convergence(self, results: Dict[str, Any]) -> Dict[str, Any]:
-        """シミュレーション回数による収束性分析"""
+        """Analyze convergence as simulation counts increase."""
         convergence = {}
         
         counts = [int(k) for k in results.keys() if k.isdigit()]
         counts.sort()
         
-        # 平均値の収束
+        # Convergence of mean values
         mean_returns = [results[str(c)]['basic_stats']['return_stats']['mean'] for c in counts]
         mean_risks = [results[str(c)]['basic_stats']['risk_stats']['mean'] for c in counts]
         
@@ -699,7 +699,7 @@ class PortfolioCalculator:
         return convergence
     
     def _calculate_stability(self, values: List[float]) -> Dict[str, float]:
-        """値の安定性を計算"""
+        """Calculate the stability of a series of values."""
         if len(values) < 2:
             return {'coefficient_of_variation': 0, 'max_change': 0}
         
@@ -716,8 +716,8 @@ class PortfolioCalculator:
         }
     
     def _recommend_min_simulations(self, counts: List[int], returns: List[float], risks: List[float]) -> int:
-        """最小推奨シミュレーション回数を計算"""
-        threshold = 0.001  # 1%以下の変動を安定とみなす
+        """Calculate the minimum recommended simulation count."""
+        threshold = 0.001  # Treat changes of 1% or less as stable.
         
         for i in range(1, len(counts)):
             return_change = abs(returns[i] - returns[i-1]) / abs(returns[i-1]) if returns[i-1] != 0 else 0
