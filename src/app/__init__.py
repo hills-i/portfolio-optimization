@@ -2,19 +2,16 @@ import os
 
 from flask import Flask, session, g
 from flask_babel import Babel
-from config import config, DEV_SECRET_KEY
+from config import config
 
 def create_app(config_name='default'):
     """Flask application factory."""
     app = Flask(__name__)
     app.config.from_object(config[config_name])
 
-    if config_name == 'local':
-        app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
-        if not app.config['SECRET_KEY']:
-            raise RuntimeError('SECRET_KEY environment variable is required in local mode')
-    elif not app.config.get('SECRET_KEY'):
-        app.config['SECRET_KEY'] = DEV_SECRET_KEY
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+    if not app.config['SECRET_KEY']:
+        raise RuntimeError('SECRET_KEY environment variable is required')
     
     # Babel configuration
     app.config['LANGUAGES'] = {

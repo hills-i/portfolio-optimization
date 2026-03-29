@@ -23,7 +23,7 @@ A web application for financial portfolio analysis and optimization using Modern
 
 ## 🛠 Technology Stack
 
-- **Backend**: Flask 3.1.0, Python 3.11+
+- **Backend**: Flask 3.1.3, Python 3.11+
 - **Data Processing**: pandas 2.3.0, numpy 2.3.0, scipy 1.16.0
 - **Financial Data**: yfinance 0.2.65 (Yahoo Finance API)
 - **Visualization**: plotly 6.2.0 for interactive charts
@@ -53,12 +53,18 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. **Run the application:**
+4. **Create a local environment file:**
+```bash
+cp .env.example .env
+```
+Update `SECRET_KEY` in `.env` before starting the app.
+
+5. **Run the application:**
 ```bash
 python src/run.py
 ```
 
-5. **Open your browser:**
+6. **Open your browser:**
    - Navigate to `http://localhost:5000`
    - The application runs on port 5000 by default
 
@@ -178,14 +184,29 @@ portfolio-optimization/
 
 ### Environment Variables
 
+**Required for local use:**
+- `SECRET_KEY`: Required for Flask session security in every runtime mode
+
 **Recommended for local use:**
-- `SECRET_KEY`: Required in local mode for Flask session security
-- `APP_ENV`: Set to 'local' for non-development local use
+- `APP_ENV`: Set to `local` for non-development local use
 
 **Optional Configuration:**
 - `DATABASE_URL`: SQLite database path (default: `sqlite:///portfolio.db`)
+- `DEBUG`: Overrides the app config debug flag when needed
+- `PORT`: Overrides the default port `5000`
 
-**Example Local Setup:**
+** `.env` setup:**
+```dotenv
+SECRET_KEY=replace-with-a-long-random-string
+APP_ENV=local
+```
+
+You can copy from `.env.example`:
+```bash
+cp .env.example .env
+```
+
+**Local setup:**
 ```bash
 export SECRET_KEY="your-randomly-generated-secret-key-here"
 export DATABASE_URL="sqlite:///local.db"
@@ -194,14 +215,14 @@ export APP_ENV="local"
 
 **Docker Example:**
 ```bash
-docker run --rm -p 5000:5000 \
-  -e SECRET_KEY="your-randomly-generated-secret-key-here" \
-  portfolio-optimization
+docker build -t portfolio-optimization .
+docker run --rm -p 5000:5000 --env-file .env portfolio-optimization
 ```
 
 **Development Setup:**
 ```bash
-# Development uses local-friendly defaults
+# Development still requires SECRET_KEY
+export SECRET_KEY="your-randomly-generated-secret-key-here"
 export APP_ENV="development"
 ```
 

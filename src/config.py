@@ -1,6 +1,9 @@
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 
-DEV_SECRET_KEY = 'dev-secret-key-change-me'
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+load_dotenv(PROJECT_ROOT / '.env')
 
 class Config:
     """Base configuration class."""
@@ -31,7 +34,6 @@ class Config:
 class DevelopmentConfig(Config):
     """Development environment configuration."""
     DEBUG = True
-    SECRET_KEY = os.environ.get('SECRET_KEY') or DEV_SECRET_KEY
 
 class LocalConfig(Config):
     """Local runtime configuration."""

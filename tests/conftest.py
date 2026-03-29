@@ -11,6 +11,12 @@ import pandas as pd
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 
+@pytest.fixture(autouse=True)
+def default_secret_key(monkeypatch):
+    """Provide a default secret key for tests unless overridden."""
+    monkeypatch.setenv('SECRET_KEY', 'test-secret-key')
+
+
 @pytest.fixture
 def app():
     """Test Flask application."""

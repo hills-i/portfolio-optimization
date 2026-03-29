@@ -49,11 +49,9 @@ class TestDevelopmentConfig:
         from config import DevelopmentConfig
         assert DevelopmentConfig.DEBUG is True
 
-    def test_has_development_secret_key_default(self):
-        from config import DEV_SECRET_KEY, DevelopmentConfig
-        assert DevelopmentConfig.SECRET_KEY is not None
-        if os.environ.get('SECRET_KEY') is None:
-            assert DevelopmentConfig.SECRET_KEY == DEV_SECRET_KEY
+    def test_secret_key_comes_from_environment(self):
+        from config import DevelopmentConfig
+        assert DevelopmentConfig.SECRET_KEY == os.environ.get('SECRET_KEY')
 
     def test_inherits_config(self):
         from config import DevelopmentConfig, Config
