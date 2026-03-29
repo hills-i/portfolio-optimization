@@ -178,18 +178,18 @@ portfolio-optimization/
 
 ### Environment Variables
 
-**Recommended for deployment:**
-- `SECRET_KEY`: Required in production for Flask session security
-- `FLASK_ENV`: Set to 'production' for production deployment
+**Recommended for local use:**
+- `SECRET_KEY`: Required in local mode for Flask session security
+- `APP_ENV`: Set to 'local' for non-development local use
 
 **Optional Configuration:**
 - `DATABASE_URL`: SQLite database path (default: `sqlite:///portfolio.db`)
 
-**Example Production Setup:**
+**Example Local Setup:**
 ```bash
 export SECRET_KEY="your-randomly-generated-secret-key-here"
-export DATABASE_URL="sqlite:///production.db"
-export FLASK_ENV="production"
+export DATABASE_URL="sqlite:///local.db"
+export APP_ENV="local"
 ```
 
 **Docker Example:**
@@ -202,7 +202,7 @@ docker run --rm -p 5000:5000 \
 **Development Setup:**
 ```bash
 # Development uses local-friendly defaults
-export FLASK_ENV="development"
+export APP_ENV="development"
 ```
 
 ### Application Settings
@@ -281,6 +281,12 @@ curl -X POST http://localhost:5000/api/validate \
 - Use meaningful variable names
 - Add docstrings for all functions
 - Include type hints where applicable
+
+## Disclaimer
+
+This application is not investment advice.
+Market data is obtained via yfinance from Yahoo Finance.
+Please review the yfinance documentation and the applicable Yahoo terms of use before using this software.
 
 ## 📄 License
 

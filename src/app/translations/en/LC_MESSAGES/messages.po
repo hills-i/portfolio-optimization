@@ -45,8 +45,8 @@ msgstr "Start Date"
 msgid "End Date"
 msgstr "End Date"
 
-msgid "Minimum 1 year, maximum 10 years"
-msgstr "Minimum 1 year, maximum 10 years"
+msgid "Minimum 1 year, maximum 30 years"
+msgstr "Minimum 1 year, maximum 30 years"
 
 msgid "Risk-free Rate (Annual %)"
 msgstr "Risk-free Rate (Annual %)"
@@ -207,8 +207,8 @@ msgstr "Enter ticker symbols for the stocks you want to analyze (e.g., AAPL, 720
 msgid "Period Setting"
 msgstr "Period Setting"
 
-msgid "Set the data collection period (minimum 1 year, maximum 10 years)"
-msgstr "Set the data collection period (minimum 1 year, maximum 10 years)"
+msgid "Set the data collection period (minimum 1 year, maximum 30 years)"
+msgstr "Set the data collection period (minimum 1 year, maximum 30 years)"
 
 msgid "Parameter Adjustment"
 msgstr "Parameter Adjustment"

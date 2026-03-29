@@ -2,7 +2,7 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-ENV FLASK_ENV=production \
+ENV APP_ENV=local \
     DEBUG=false \
     PORT=5000
 

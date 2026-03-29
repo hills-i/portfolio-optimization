@@ -45,8 +45,8 @@ msgstr "開始日"
 msgid "End Date"
 msgstr "終了日"
 
-msgid "Minimum 1 year, maximum 10 years"
-msgstr "最低1年、最大10年"
+msgid "Minimum 1 year, maximum 30 years"
+msgstr "最低1年、最大30年"
 
 msgid "Risk-free Rate (Annual %)"
 msgstr "無リスク金利（年率%）"
@@ -207,8 +207,8 @@ msgstr "分析したい銘柄のティッカーシンボルを入力してくだ
 msgid "Period Setting"
 msgstr "期間設定"
 
-msgid "Set the data collection period (minimum 1 year, maximum 10 years)"
-msgstr "データ取得期間を設定してください（最低1年、最大10年）"
+msgid "Set the data collection period (minimum 1 year, maximum 30 years)"
+msgstr "データ取得期間を設定してください（最低1年、最大30年）"
 
 msgid "Parameter Adjustment"
 msgstr "パラメータ調整"

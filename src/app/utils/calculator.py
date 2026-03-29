@@ -671,7 +671,7 @@ class PortfolioCalculator:
                 'basic_stats': analysis['basic_stats'],
                 'confidence_intervals': analysis['confidence_intervals'],
                 'best_sharpe': analysis['efficiency_metrics']['best_sharpe_portfolio'],
-                'computation_time': None  # Add time measurement in a production implementation.
+                'computation_time': None  # Add time measurement in a fuller implementation.
             }
         
         # Convergence analysis

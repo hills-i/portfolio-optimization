@@ -1,6 +1,6 @@
 import os
 
-DEV_SECRET_KEY = 'dev-secret-key-change-in-production'
+DEV_SECRET_KEY = 'dev-secret-key-change-me'
 
 class Config:
     """Base configuration class."""
@@ -33,12 +33,12 @@ class DevelopmentConfig(Config):
     DEBUG = True
     SECRET_KEY = os.environ.get('SECRET_KEY') or DEV_SECRET_KEY
 
-class ProductionConfig(Config):
-    """Production environment configuration."""
+class LocalConfig(Config):
+    """Local runtime configuration."""
     DEBUG = False
 
 config = {
     'development': DevelopmentConfig,
-    'production': ProductionConfig,
+    'local': LocalConfig,
     'default': DevelopmentConfig
 }

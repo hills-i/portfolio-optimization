@@ -60,29 +60,29 @@ class TestDevelopmentConfig:
         assert issubclass(DevelopmentConfig, Config)
 
 
-class TestProductionConfig:
+class TestLocalConfig:
     def test_debug_is_false(self):
-        from config import ProductionConfig
-        assert ProductionConfig.DEBUG is False
+        from config import LocalConfig
+        assert LocalConfig.DEBUG is False
 
     def test_secret_key_must_come_from_environment(self):
-        from config import ProductionConfig
-        assert ProductionConfig.SECRET_KEY == os.environ.get('SECRET_KEY')
+        from config import LocalConfig
+        assert LocalConfig.SECRET_KEY == os.environ.get('SECRET_KEY')
 
     def test_inherits_config(self):
-        from config import ProductionConfig, Config
-        assert issubclass(ProductionConfig, Config)
+        from config import LocalConfig, Config
+        assert issubclass(LocalConfig, Config)
 
 
 class TestConfigDict:
     def test_config_keys(self):
         from config import config
         assert 'development' in config
-        assert 'production' in config
+        assert 'local' in config
         assert 'default' in config
 
     def test_config_values(self):
-        from config import config, DevelopmentConfig, ProductionConfig
+        from config import config, DevelopmentConfig, LocalConfig
         assert config['development'] is DevelopmentConfig
-        assert config['production'] is ProductionConfig
+        assert config['local'] is LocalConfig
         assert config['default'] is DevelopmentConfig

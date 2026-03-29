@@ -19,23 +19,23 @@ class TestCreateApp:
         app = create_app('development')
         assert app.config['DEBUG'] is True
 
-    def test_create_app_production(self, monkeypatch):
+    def test_create_app_local(self, monkeypatch):
         from app import create_app
-        monkeypatch.setenv('SECRET_KEY', 'test-production-secret')
-        app = create_app('production')
+        monkeypatch.setenv('SECRET_KEY', 'test-local-secret')
+        app = create_app('local')
         assert app.config['DEBUG'] is False
-        assert app.config['SECRET_KEY'] == 'test-production-secret'
+        assert app.config['SECRET_KEY'] == 'test-local-secret'
 
     def test_create_app_default(self):
         from app import create_app
         app = create_app('default')
         assert app.config['DEBUG'] is True  # default == development
 
-    def test_create_app_production_requires_secret_key(self, monkeypatch):
+    def test_create_app_local_requires_secret_key(self, monkeypatch):
         from app import create_app
         monkeypatch.delenv('SECRET_KEY', raising=False)
         with pytest.raises(RuntimeError, match='SECRET_KEY'):
-            create_app('production')
+            create_app('local')
 
     def test_create_app_invalid_config(self):
         from app import create_app
