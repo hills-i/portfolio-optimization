@@ -331,6 +331,14 @@ class PortfolioCalculator:
             
             # Calculate metrics for the optimal portfolio.
             optimal_metrics = self.calculate_portfolio_metrics(optimal_weights)
+
+            target_return_achieved = None
+            target_return_gap = None
+            if target_return is not None:
+                target_return_gap = float(optimal_metrics['expected_return'] - target_return)
+                target_return_achieved = bool(
+                    result.success and abs(target_return_gap) <= 1e-4
+                )
             
             # Assemble the result.
             optimization_result = {
@@ -339,6 +347,8 @@ class PortfolioCalculator:
                 'weights': {asset: weight for asset, weight in zip(self.mean_returns.index, optimal_weights)},
                 'metrics': optimal_metrics,
                 'target_return': target_return,
+                'target_return_achieved': target_return_achieved,
+                'target_return_gap': target_return_gap,
                 'optimizer_success': result.success,
                 'optimizer_message': result.message
             }

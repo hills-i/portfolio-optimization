@@ -256,9 +256,14 @@ function updatePortfolioTables(results) {
         targetReturnDataTab.classList.remove('disabled');
         targetReturnDataTab.removeAttribute('disabled');
     }
+
+    updateTargetReturnTabLabels();
     
     portfolioTypes.forEach(portfolio => {
         if (results.optimal_portfolios[portfolio.key]) {
+            if (portfolio.key === 'target_return') {
+                updateTargetReturnTabLabels(results.optimal_portfolios[portfolio.key]);
+            }
             updateSinglePortfolioTable(
                 results.optimal_portfolios[portfolio.key], 
                 portfolio.tableId, 
@@ -330,18 +335,20 @@ function updateSinglePortfolioTable(portfolioData, tableId, metricsTableId = nul
     
     // Also update metrics table
     if (metricsTableId && portfolioData.metrics) {
-        updateMetricsTable(portfolioData.metrics, metricsTableId);
+        updateMetricsTable(portfolioData, metricsTableId);
     }
 }
 
 // Update metrics table
-function updateMetricsTable(metrics, tableId) {
+function updateMetricsTable(portfolioData, tableId) {
     const tbody = document.querySelector(`#${tableId} tbody`);
     
     if (!tbody) {
         console.warn(`Metrics table ${tableId} not found`);
         return;
     }
+
+    const metrics = portfolioData.metrics;
     
     const metricsData = [
         { label: _('Expected Return'), value: formatPercent(metrics.expected_return), class: 'metrics-positive' },
@@ -349,6 +356,16 @@ function updateMetricsTable(metrics, tableId) {
         { label: _('Sharpe Ratio'), value: formatNumber(metrics.sharpe_ratio), class: metrics.sharpe_ratio > 0 ? 'metrics-positive' : 'metrics-negative' },
         { label: _('VaR (95%)'), value: metrics.var_95 ? formatPercent(metrics.var_95) : 'N/A', class: 'metrics-neutral' }
     ];
+
+    if (portfolioData.target_return !== null && portfolioData.target_return !== undefined) {
+        metricsData.unshift({
+            label: currentLanguage === 'ja' ? '目標リターン判定' : 'Target Return Status',
+            value: portfolioData.target_return_achieved === false
+                ? (currentLanguage === 'ja' ? '未達成' : 'Unmet')
+                : (currentLanguage === 'ja' ? '達成' : 'Achieved'),
+            class: portfolioData.target_return_achieved === false ? 'metrics-negative' : 'metrics-positive'
+        });
+    }
     
     tbody.innerHTML = metricsData.map(item => `
         <tr>
@@ -356,6 +373,19 @@ function updateMetricsTable(metrics, tableId) {
             <td class="${item.class}">${item.value}</td>
         </tr>
     `).join('');
+}
+
+function updateTargetReturnTabLabels(portfolioData = null) {
+    const label = portfolioData && portfolioData.target_return_achieved === false
+        ? (currentLanguage === 'ja' ? '目標リターン未達成' : 'Target Return Unmet')
+        : _('Target Return Achievement');
+
+    ['target-return-tab', 'target-return-data-tab'].forEach(id => {
+        const tab = document.getElementById(id);
+        if (tab) {
+            tab.innerHTML = `<i class="bi bi-target me-2"></i>${label}`;
+        }
+    });
 }
 
 // Update individual asset statistics table

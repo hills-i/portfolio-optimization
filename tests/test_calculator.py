@@ -151,6 +151,15 @@ class TestOptimizePortfolio:
         assert result['success'] is True
         assert result['optimization_type'] == 'min_risk'
         assert result['target_return'] == target
+        assert result['target_return_achieved'] is True
+
+    def test_infeasible_target_is_marked_unachieved(self, app_context, loaded_calculator):
+        result = loaded_calculator.optimize_portfolio(target_return=0.8)
+        assert result['success'] is True
+        assert result['target_return'] == 0.8
+        assert result['target_return_achieved'] is False
+        assert result['optimizer_success'] is False
+        assert result['target_return_gap'] < 0
 
     def test_weights_non_negative(self, app_context, loaded_calculator):
         result = loaded_calculator.optimize_portfolio()
