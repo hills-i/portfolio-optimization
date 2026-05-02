@@ -32,7 +32,7 @@ class PortfolioVisualizer:
         Create an efficient frontier plot.
         
         Args:
-            monte_carlo_data: Monte Carlo simulation results.
+            monte_carlo_data: Random portfolio allocation sample results.
             efficient_frontier_data: Efficient frontier data.
             optimal_portfolios: Optimal portfolios.
             
@@ -41,7 +41,7 @@ class PortfolioVisualizer:
         """
         fig = go.Figure()
         
-        # Scatter plot for Monte Carlo simulation results.
+        # Scatter plot for random portfolio allocation samples.
         mc_df = pd.DataFrame(monte_carlo_data)
         
         fig.add_trace(go.Scatter(
@@ -56,7 +56,7 @@ class PortfolioVisualizer:
                 colorbar=dict(title=_('Sharpe Ratio')),
                 showscale=True
             ),
-            name=_('Monte Carlo Simulation'),
+            name=_('Random Portfolio Samples'),
             hovertemplate='<b>' + _('Risk') + ':</b> %{x:.3f}<br>' +
                          '<b>' + _('Return') + ':</b> %{y:.3f}<br>' +
                          '<b>' + _('Sharpe Ratio') + ':</b> %{marker.color:.3f}<extra></extra>'
@@ -377,10 +377,14 @@ class PortfolioVisualizer:
         """
         charts = {}
         
-        # Efficient frontier (Monte Carlo based)
-        if 'monte_carlo' in analysis_results and 'efficient_frontier' in analysis_results:
+        # Efficient frontier with random portfolio allocation samples.
+        random_portfolios = analysis_results.get(
+            'random_portfolios',
+            analysis_results.get('monte_carlo')
+        )
+        if random_portfolios and 'efficient_frontier' in analysis_results:
             charts['efficient_frontier'] = self.create_efficient_frontier_plot(
-                analysis_results['monte_carlo']['simulations'],
+                random_portfolios['simulations'],
                 analysis_results['efficient_frontier'],
                 analysis_results.get('optimal_portfolios')
             )

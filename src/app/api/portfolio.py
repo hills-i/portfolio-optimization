@@ -192,30 +192,33 @@ def analyze_portfolio():
         correlation_matrix = calculator.calculate_correlation_matrix()
         results['correlation_matrix'] = correlation_matrix.to_dict()
         
-        # Monte Carlo simulation
+        # Random portfolio allocation samples
         try:
-            logger.info(f"Running Monte Carlo simulation with {simulation_count} iterations")
-            mc_results = calculator.monte_carlo_simulation(simulation_count)
-            logger.info(f"Monte Carlo simulation completed: {len(mc_results)} results")
+            logger.info(f"Running random portfolio simulation with {simulation_count} samples")
+            random_portfolio_results = calculator.random_portfolio_simulation(simulation_count)
+            logger.info(f"Random portfolio simulation completed: {len(random_portfolio_results)} results")
             
             # Execute detailed analysis
-            detailed_analysis = calculator.analyze_monte_carlo_results(mc_results)
+            detailed_analysis = calculator.analyze_monte_carlo_results(random_portfolio_results)
             
         except Exception as e:
-            logger.error(f"Monte Carlo simulation failed: {str(e)}")
+            logger.error(f"Random portfolio simulation failed: {str(e)}")
             raise
         
-        results['monte_carlo'] = {
-            'simulations': mc_results.to_dict('records'),
+        random_portfolio_payload = {
+            **calculator.random_portfolio_metadata(),
+            'simulations': random_portfolio_results.to_dict('records'),
             'detailed_analysis': detailed_analysis,
             'summary_stats': {
-                'mean_return': mc_results['expected_return'].mean(),
-                'mean_risk': mc_results['risk'].mean(),
-                'mean_sharpe': mc_results['sharpe_ratio'].mean(),
-                'max_sharpe': mc_results['sharpe_ratio'].max(),
-                'min_risk': mc_results['risk'].min()
+                'mean_return': random_portfolio_results['expected_return'].mean(),
+                'mean_risk': random_portfolio_results['risk'].mean(),
+                'mean_sharpe': random_portfolio_results['sharpe_ratio'].mean(),
+                'max_sharpe': random_portfolio_results['sharpe_ratio'].max(),
+                'min_risk': random_portfolio_results['risk'].min()
             }
         }
+        results['random_portfolios'] = random_portfolio_payload
+        results['monte_carlo'] = random_portfolio_payload
         
         # Optimal portfolio calculation
         # 1. Maximum Sharpe ratio portfolio
@@ -405,10 +408,14 @@ def create_visualizations():
             for chart_type in chart_types:
                 try:
                     if chart_type == 'efficient_frontier':
-                        if ('monte_carlo' in analysis_results and
+                        random_portfolios = analysis_results.get(
+                            'random_portfolios',
+                            analysis_results.get('monte_carlo')
+                        )
+                        if (random_portfolios and
                             'efficient_frontier' in analysis_results):
                             charts[chart_type] = visualizer.create_efficient_frontier_plot(
-                                analysis_results['monte_carlo']['simulations'],
+                                random_portfolios['simulations'],
                                 analysis_results['efficient_frontier'],
                                 analysis_results.get('optimal_portfolios')
                             )

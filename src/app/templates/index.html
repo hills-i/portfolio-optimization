@@ -91,13 +91,13 @@
                         </div>
                     </div>
 
-                    <!-- Simulation count -->
+                    <!-- Random portfolio sample count -->
                     <div class="mb-3">
                         <label for="simulationCount" class="form-label">
-                            {{ _('Simulation Count') }}
+                            {{ _('Random Portfolio Sample Count') }}
                             <i class="bi bi-question-circle text-info" 
                                data-bs-toggle="tooltip" 
-                               title="{{ _('Number of Monte Carlo simulation trials') }}"></i>
+                               title="{{ _('Number of random portfolio allocation samples') }}"></i>
                         </label>
                         <div class="range-input-group">
                             <input type="range" class="form-range range-input"
@@ -172,7 +172,7 @@
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="simulation-tab" data-bs-toggle="tab" 
                                     data-bs-target="#simulation" type="button" role="tab">
-                                <i class="bi bi-cpu me-1"></i>{{ _('Simulation Details') }}
+                                <i class="bi bi-cpu me-1"></i>{{ _('Random Portfolio Samples') }}
                             </button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -345,11 +345,11 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Confidence intervals -->
+                                <!-- Allocation distribution intervals -->
                                 <div class="col-lg-6 mb-4">
                                     <div class="card h-100">
                                         <div class="card-header">
-                                            <h6 class="mb-0"><i class="bi bi-arrow-left-right me-2"></i>{{ _('Confidence Intervals') }}</h6>
+                                            <h6 class="mb-0"><i class="bi bi-arrow-left-right me-2"></i>{{ _('Allocation Distribution Intervals') }}</h6>
                                         </div>
                                         <div class="card-body">
                                             <div id="confidenceIntervalsContent">
@@ -377,12 +377,12 @@
                                 <div class="col-lg-12 mb-4">
                                     <div class="card">
                                         <div class="card-header">
-                                            <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>{{ _('Simulation Count Comparison') }}</h6>
+                                            <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>{{ _('Sample Count Comparison') }}</h6>
                                         </div>
                                         <div class="card-body text-center">
-                                            <p class="text-muted">{{ _('You can check the difference in results with different simulation counts') }}</p>
+                                            <p class="text-muted">{{ _('You can check the difference in results with different random portfolio sample counts') }}</p>
                                             <button class="btn btn-outline-primary" onclick="compareSimulations()">
-                                                <i class="bi bi-arrow-repeat me-2"></i>{{ _('Run Simulation Count Comparison') }}
+                                                <i class="bi bi-arrow-repeat me-2"></i>{{ _('Run Sample Count Comparison') }}
                                             </button>
                                             <div id="simulationComparisonResult" class="mt-4" style="display: none;">
                                                 <!-- Comparison results appear here -->

@@ -187,7 +187,19 @@ class TestAnalyzePortfolioEndpoint:
         assert resp.status_code == 200
         data = resp.get_json()
         assert data['success'] is True
+        assert 'random_portfolios' in data
         assert 'monte_carlo' in data
+        assert data['monte_carlo']['summary_stats'] == data['random_portfolios']['summary_stats']
+        assert data['monte_carlo']['detailed_analysis'] == data['random_portfolios']['detailed_analysis']
+        assert data['random_portfolios']['simulation_type'] == 'random_weight_allocation'
+        assert data['random_portfolios']['uses_return_paths'] is False
+        assert data['random_portfolios']['distribution_assumption'] == 'none_for_future_returns'
+        assert data['random_portfolios']['canonical_result_key'] == 'random_portfolios'
+        detailed_analysis = data['random_portfolios']['detailed_analysis']
+        assert 'allocation_tail_percentiles' in detailed_analysis
+        assert 'allocation_distribution_intervals' in detailed_analysis
+        assert detailed_analysis['tail_percentiles'] == detailed_analysis['allocation_tail_percentiles']
+        assert detailed_analysis['confidence_intervals'] == detailed_analysis['allocation_distribution_intervals']
         assert 'asset_statistics' in data
         assert 'correlation_matrix' in data
         assert data['risk_metric_metadata']['var'] == {

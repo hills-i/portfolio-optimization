@@ -116,13 +116,13 @@ class TestCalculatePortfolioMetrics:
 
 
 # ==========================================================
-# monte_carlo_simulation
+# random_portfolio_simulation / monte_carlo_simulation compatibility alias
 # ==========================================================
-class TestMonteCarloSimulation:
+class TestRandomPortfolioSimulation:
 
     def test_result_shape(self, app_context, loaded_calculator):
         np.random.seed(42)
-        result = loaded_calculator.monte_carlo_simulation(100)
+        result = loaded_calculator.random_portfolio_simulation(100)
         assert len(result) == 100
         assert 'expected_return' in result.columns
         assert 'risk' in result.columns
@@ -130,29 +130,36 @@ class TestMonteCarloSimulation:
 
     def test_weight_columns_present(self, app_context, loaded_calculator):
         np.random.seed(42)
-        result = loaded_calculator.monte_carlo_simulation(10)
+        result = loaded_calculator.random_portfolio_simulation(10)
         weight_cols = [c for c in result.columns if c.startswith('weight_')]
         assert len(weight_cols) == 3
 
     def test_weights_sum_to_one(self, app_context, loaded_calculator):
         np.random.seed(42)
-        result = loaded_calculator.monte_carlo_simulation(50)
+        result = loaded_calculator.random_portfolio_simulation(50)
         weight_cols = [c for c in result.columns if c.startswith('weight_')]
         sums = result[weight_cols].sum(axis=1)
         np.testing.assert_array_almost_equal(sums.values, np.ones(50), decimal=10)
 
     def test_reproducibility(self, app_context, loaded_calculator):
         np.random.seed(42)
-        r1 = loaded_calculator.monte_carlo_simulation(50)
+        r1 = loaded_calculator.random_portfolio_simulation(50)
         np.random.seed(42)
-        r2 = loaded_calculator.monte_carlo_simulation(50)
+        r2 = loaded_calculator.random_portfolio_simulation(50)
         pd.testing.assert_frame_equal(r1, r2)
 
     def test_raises_without_data(self, app_context):
         from app.utils.calculator import PortfolioCalculator
         calc = PortfolioCalculator()
         with pytest.raises(ValueError):
-            calc.monte_carlo_simulation(10)
+            calc.random_portfolio_simulation(10)
+
+    def test_monte_carlo_wrapper_remains_compatible(self, app_context, loaded_calculator):
+        np.random.seed(42)
+        random_portfolios = loaded_calculator.random_portfolio_simulation(50)
+        np.random.seed(42)
+        monte_carlo_alias = loaded_calculator.monte_carlo_simulation(50)
+        pd.testing.assert_frame_equal(random_portfolios, monte_carlo_alias)
 
 
 # ==========================================================
@@ -344,6 +351,12 @@ class TestAnalyzeMonteCarloResults:
 
     def test_basic_stats(self, app_context, loaded_calculator, sample_mc_results):
         analysis = loaded_calculator.analyze_monte_carlo_results(sample_mc_results)
+        assert analysis['metadata'] == {
+            'simulation_type': 'random_weight_allocation',
+            'uses_return_paths': False,
+            'distribution_assumption': 'none_for_future_returns',
+            'canonical_result_key': 'random_portfolios'
+        }
         assert 'basic_stats' in analysis
         assert analysis['basic_stats']['total_simulations'] == len(sample_mc_results)
 
@@ -353,12 +366,17 @@ class TestAnalyzeMonteCarloResults:
         assert 'p5' in analysis['percentiles']
         assert 'p95' in analysis['percentiles']
 
-    def test_confidence_intervals(self, app_context, loaded_calculator, sample_mc_results):
+    def test_allocation_distribution_intervals(self, app_context, loaded_calculator, sample_mc_results):
         analysis = loaded_calculator.analyze_monte_carlo_results(sample_mc_results)
-        ci = analysis['confidence_intervals']
-        # In the 95% CI, lower should be less than upper.
-        assert ci['return_ci_95'][0] < ci['return_ci_95'][1]
-        assert ci['risk_ci_95'][0] < ci['risk_ci_95'][1]
+        intervals = analysis['allocation_distribution_intervals']
+        assert intervals['return_ci_95'][0] < intervals['return_ci_95'][1]
+        assert intervals['risk_ci_95'][0] < intervals['risk_ci_95'][1]
+        assert analysis['confidence_intervals'] is intervals
+
+    def test_allocation_tail_percentiles(self, app_context, loaded_calculator, sample_mc_results):
+        analysis = loaded_calculator.analyze_monte_carlo_results(sample_mc_results)
+        assert 'allocation_tail_percentiles' in analysis
+        assert analysis['tail_percentiles'] is analysis['allocation_tail_percentiles']
 
     def test_efficiency_metrics(self, app_context, loaded_calculator, sample_mc_results):
         analysis = loaded_calculator.analyze_monte_carlo_results(sample_mc_results)

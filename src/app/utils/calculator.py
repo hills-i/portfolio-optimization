@@ -94,22 +94,25 @@ class PortfolioCalculator:
             **self.calculate_annual_normal_downside_metrics(expected_return, portfolio_risk)
         }
     
-    def monte_carlo_simulation(self, num_simulations: int = 10000) -> pd.DataFrame:
+    def random_portfolio_simulation(self, num_simulations: int = 10000) -> pd.DataFrame:
         """
-        Run a Monte Carlo simulation.
+        Generate random-weight portfolio allocation samples.
+
+        This samples allocation weights only. It does not simulate future
+        return paths or assume a future-return distribution.
         
         Args:
-            num_simulations: Number of simulations.
+            num_simulations: Number of random portfolios.
             
         Returns:
-            pd.DataFrame: Simulation results.
+            pd.DataFrame: Random portfolio sample results.
         """
         if self.returns is None:
             raise ValueError(_('Data not loaded. Call load_data() first.'))
         
         num_assets = len(self.mean_returns)
         
-        logger.info(f"Starting Monte Carlo simulation with {num_simulations} iterations")
+        logger.info(f"Starting random portfolio simulation with {num_simulations} samples")
         
         # Vectorized generation of all random weights.
         weights_matrix = np.random.random((num_simulations, num_assets))
@@ -118,7 +121,7 @@ class PortfolioCalculator:
         # Log the first five simulation weights for debugging.
         for i in range(min(5, num_simulations)):
             weight_info = {asset: f"{weights_matrix[i, j]:.3f}" for j, asset in enumerate(self.mean_returns.index)}
-            logger.info(f"Simulation {i+1} weights: {weight_info}")
+            logger.info(f"Random portfolio sample {i+1} weights: {weight_info}")
         
         # Vectorized portfolio metric calculation.
         mean_returns_arr = self.mean_returns.values
@@ -143,9 +146,18 @@ class PortfolioCalculator:
         for j, asset in enumerate(self.mean_returns.index):
             df[f'weight_{asset}'] = weights_matrix[:, j]
         
-        logger.info("Monte Carlo simulation completed successfully")
+        logger.info("Random portfolio simulation completed successfully")
         
         return df
+
+    def monte_carlo_simulation(self, num_simulations: int = 10000) -> pd.DataFrame:
+        """
+        Deprecated alias for random_portfolio_simulation().
+
+        The existing behavior samples random portfolio weights; it does not
+        simulate future return paths.
+        """
+        return self.random_portfolio_simulation(num_simulations)
     
     def monte_carlo_simulation_returns(self, num_simulations: int = 10000, time_horizon: int = 252) -> pd.DataFrame:
         """
@@ -560,6 +572,16 @@ class PortfolioCalculator:
         
         return result
     
+    @staticmethod
+    def random_portfolio_metadata() -> Dict[str, Any]:
+        """Metadata describing the random-weight portfolio sample semantics."""
+        return {
+            'simulation_type': 'random_weight_allocation',
+            'uses_return_paths': False,
+            'distribution_assumption': 'none_for_future_returns',
+            'canonical_result_key': 'random_portfolios'
+        }
+
     def analyze_monte_carlo_results(self, mc_results: pd.DataFrame) -> Dict[str, Any]:
         """
         Perform detailed analysis of Monte Carlo results.
@@ -570,7 +592,9 @@ class PortfolioCalculator:
         Returns:
             Dict: Detailed analysis results.
         """
-        analysis = {}
+        analysis = {
+            'metadata': self.random_portfolio_metadata()
+        }
         
         # Basic statistics
         analysis['basic_stats'] = {
@@ -609,15 +633,17 @@ class PortfolioCalculator:
             }
         
         # Tail percentiles for allocation-distribution outcomes.
-        analysis['tail_percentiles'] = {
+        allocation_tail_percentiles = {
             'return_p5': float(mc_results['expected_return'].quantile(0.05)),
             'return_p1': float(mc_results['expected_return'].quantile(0.01)),
             'risk_p95': float(mc_results['risk'].quantile(0.95)),
             'risk_p99': float(mc_results['risk'].quantile(0.99))
         }
+        analysis['allocation_tail_percentiles'] = allocation_tail_percentiles
+        analysis['tail_percentiles'] = allocation_tail_percentiles
         
-        # Confidence intervals
-        analysis['confidence_intervals'] = {
+        # Allocation distribution intervals across random-weight samples.
+        allocation_distribution_intervals = {
             'return_ci_95': [
                 float(mc_results['expected_return'].quantile(0.025)),
                 float(mc_results['expected_return'].quantile(0.975))
@@ -635,6 +661,8 @@ class PortfolioCalculator:
                 float(mc_results['sharpe_ratio'].quantile(0.975))
             ]
         }
+        analysis['allocation_distribution_intervals'] = allocation_distribution_intervals
+        analysis['confidence_intervals'] = allocation_distribution_intervals
         
         # Efficiency metrics
         analysis['efficiency_metrics'] = {
@@ -732,12 +760,14 @@ class PortfolioCalculator:
         
         for count in counts:
             logger.info(f"Running simulation with {count} iterations for comparison")
-            mc_results = self.monte_carlo_simulation(count)
+            mc_results = self.random_portfolio_simulation(count)
             analysis = self.analyze_monte_carlo_results(mc_results)
             
             comparison_results[str(count)] = {
                 'simulation_count': count,
+                'metadata': self.random_portfolio_metadata(),
                 'basic_stats': analysis['basic_stats'],
+                'allocation_distribution_intervals': analysis['allocation_distribution_intervals'],
                 'confidence_intervals': analysis['confidence_intervals'],
                 'best_sharpe': analysis['efficiency_metrics']['best_sharpe_portfolio'],
                 'computation_time': None  # Add time measurement in a fuller implementation.

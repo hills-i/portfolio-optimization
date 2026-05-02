@@ -94,9 +94,9 @@ def loaded_calculator(sample_price_data):
 
 @pytest.fixture
 def sample_mc_results(loaded_calculator):
-    """Sample Monte Carlo simulation results for tests."""
+    """Sample random portfolio allocation results for tests."""
     np.random.seed(42)
-    return loaded_calculator.monte_carlo_simulation(500)
+    return loaded_calculator.random_portfolio_simulation(500)
 
 
 @pytest.fixture
@@ -126,21 +126,25 @@ def sample_analysis_results(loaded_calculator, sample_mc_results):
     except Exception:
         ef_data = []
     
+    random_portfolio_payload = {
+        **loaded_calculator.random_portfolio_metadata(),
+        'simulations': sample_mc_results.to_dict('records'),
+        'detailed_analysis': detailed_analysis,
+        'summary_stats': {
+            'mean_return': sample_mc_results['expected_return'].mean(),
+            'mean_risk': sample_mc_results['risk'].mean(),
+            'mean_sharpe': sample_mc_results['sharpe_ratio'].mean(),
+            'max_sharpe': sample_mc_results['sharpe_ratio'].max(),
+            'min_risk': sample_mc_results['risk'].min()
+        }
+    }
+
     return {
         'success': True,
         'asset_statistics': asset_stats,
         'correlation_matrix': correlation_matrix.to_dict(),
-        'monte_carlo': {
-            'simulations': sample_mc_results.to_dict('records'),
-            'detailed_analysis': detailed_analysis,
-            'summary_stats': {
-                'mean_return': sample_mc_results['expected_return'].mean(),
-                'mean_risk': sample_mc_results['risk'].mean(),
-                'mean_sharpe': sample_mc_results['sharpe_ratio'].mean(),
-                'max_sharpe': sample_mc_results['sharpe_ratio'].max(),
-                'min_risk': sample_mc_results['risk'].min()
-            }
-        },
+        'random_portfolios': random_portfolio_payload,
+        'monte_carlo': random_portfolio_payload,
         'optimal_portfolios': optimal_portfolios,
         'efficient_frontier': ef_data,
         'metadata': {

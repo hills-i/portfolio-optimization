@@ -1,5 +1,9 @@
 // Portfolio analysis specific JavaScript
 
+function getRandomPortfolioResults(results) {
+    return results.random_portfolios || results.monte_carlo;
+}
+
 // Update summary cards
 function updateSummaryCards(results) {
     const summaryCards = document.getElementById('summaryCards');
@@ -10,7 +14,7 @@ function updateSummaryCards(results) {
     }
     
     const maxSharpe = results.optimal_portfolios.max_sharpe.metrics;
-    const monteCarloStats = results.monte_carlo.summary_stats;
+    const randomPortfolioResults = getRandomPortfolioResults(results);
     
     summaryCards.innerHTML = `
         <div class="col-lg-3 col-md-6 mb-3">
@@ -43,9 +47,9 @@ function updateSummaryCards(results) {
         <div class="col-lg-3 col-md-6 mb-3">
             <div class="card metrics-card bg-warning text-dark">
                 <div class="card-body text-center">
-                    <div class="metrics-value">${formatLargeNumber(results.monte_carlo.simulations.length)}</div>
-                    <div class="metrics-label">${_('Simulations')}</div>
-                    <small>${_('Execution Count')}</small>
+                    <div class="metrics-value">${formatLargeNumber(randomPortfolioResults.simulations.length)}</div>
+                    <div class="metrics-label">${_('Random Portfolio Samples')}</div>
+                    <small>${_('Sample Count')}</small>
                 </div>
             </div>
         </div>
@@ -631,10 +635,10 @@ function analyzePerformance(results) {
     if (!results.optimal_portfolios) return null;
     
     const maxSharpe = results.optimal_portfolios.max_sharpe;
-    const monteCarloStats = results.monte_carlo.summary_stats;
+    const randomPortfolioStats = getRandomPortfolioResults(results).summary_stats;
     
     return {
-        efficiency: maxSharpe.metrics.sharpe_ratio / monteCarloStats.max_sharpe,
+        efficiency: maxSharpe.metrics.sharpe_ratio / randomPortfolioStats.max_sharpe,
         diversification: calculateDiversificationScore(maxSharpe.weights),
         riskLevel: classifyRiskLevel(maxSharpe.metrics.risk)
     };
@@ -757,12 +761,13 @@ function generateInsights(results) {
 
 // Display simulation detailed data
 function displaySimulationDetails(results) {
-    if (!results.monte_carlo || !results.monte_carlo.detailed_analysis) {
+    const randomPortfolioResults = getRandomPortfolioResults(results);
+    if (!randomPortfolioResults || !randomPortfolioResults.detailed_analysis) {
         // No detailed analysis data available
         return;
     }
     
-    const analysis = results.monte_carlo.detailed_analysis;
+    const analysis = randomPortfolioResults.detailed_analysis;
     
     // Display basic statistics
     displayBasicStats(analysis.basic_stats);
@@ -771,10 +776,12 @@ function displaySimulationDetails(results) {
     updatePercentilesTable(analysis.percentiles);
     
     // Display tail percentiles
-    displayTailPercentiles(analysis.tail_percentiles);
+    displayTailPercentiles(analysis.allocation_tail_percentiles || analysis.tail_percentiles);
     
-    // Display confidence intervals
-    displayConfidenceIntervals(analysis.confidence_intervals);
+    // Display allocation distribution intervals
+    displayAllocationDistributionIntervals(
+        analysis.allocation_distribution_intervals || analysis.confidence_intervals
+    );
     
     // Display efficiency metrics
     displayEfficiencyMetrics(analysis.efficiency_metrics);
@@ -883,32 +890,32 @@ function displayTailPercentiles(tailPercentiles) {
     container.innerHTML = html;
 }
 
-// Display confidence intervals
-function displayConfidenceIntervals(confidenceIntervals) {
+// Display allocation distribution intervals
+function displayAllocationDistributionIntervals(allocationDistributionIntervals) {
     const container = document.getElementById('confidenceIntervalsContent');
     if (!container) return;
     
     const html = `
         <div class="row">
             <div class="col-12 mb-3">
-                <h6 class="text-muted">${_('95% Confidence Interval')}</h6>
+                <h6 class="text-muted">${_('95% Allocation Distribution Interval')}</h6>
                 <ul class="list-unstyled small">
-                    <li><strong>${_('Return')}:</strong> ${(confidenceIntervals.return_ci_95[0] * 100).toFixed(2)}% ~ ${(confidenceIntervals.return_ci_95[1] * 100).toFixed(2)}%</li>
-                    <li><strong>${_('Risk')}:</strong> ${(confidenceIntervals.risk_ci_95[0] * 100).toFixed(2)}% ~ ${(confidenceIntervals.risk_ci_95[1] * 100).toFixed(2)}%</li>
-                    <li><strong>${_('Sharpe Ratio')}:</strong> ${confidenceIntervals.sharpe_ci_95[0].toFixed(3)} ~ ${confidenceIntervals.sharpe_ci_95[1].toFixed(3)}</li>
+                    <li><strong>${_('Return')}:</strong> ${(allocationDistributionIntervals.return_ci_95[0] * 100).toFixed(2)}% ~ ${(allocationDistributionIntervals.return_ci_95[1] * 100).toFixed(2)}%</li>
+                    <li><strong>${_('Risk')}:</strong> ${(allocationDistributionIntervals.risk_ci_95[0] * 100).toFixed(2)}% ~ ${(allocationDistributionIntervals.risk_ci_95[1] * 100).toFixed(2)}%</li>
+                    <li><strong>${_('Sharpe Ratio')}:</strong> ${allocationDistributionIntervals.sharpe_ci_95[0].toFixed(3)} ~ ${allocationDistributionIntervals.sharpe_ci_95[1].toFixed(3)}</li>
                 </ul>
             </div>
             <div class="col-12">
-                <h6 class="text-muted">${_('99% Confidence Interval')}</h6>
+                <h6 class="text-muted">${_('99% Allocation Distribution Interval')}</h6>
                 <ul class="list-unstyled small">
-                    <li><strong>${_('Return')}:</strong> ${(confidenceIntervals.return_ci_99[0] * 100).toFixed(2)}% ~ ${(confidenceIntervals.return_ci_99[1] * 100).toFixed(2)}%</li>
+                    <li><strong>${_('Return')}:</strong> ${(allocationDistributionIntervals.return_ci_99[0] * 100).toFixed(2)}% ~ ${(allocationDistributionIntervals.return_ci_99[1] * 100).toFixed(2)}%</li>
                 </ul>
             </div>
         </div>
         <div class="mt-2">
             <small class="text-muted">
                 <i class="bi bi-info-circle me-1"></i>
-                ${_('Confidence intervals show the range containing 95%/99% of simulation results')}
+                ${_('Allocation distribution intervals show the range containing 95%/99% of random portfolio samples')}
             </small>
         </div>
     `;
@@ -977,7 +984,7 @@ function compareSimulations() {
     const formData = getFormData();
     if (!formData) {
         button.disabled = false;
-        button.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i>Run Simulation Count Comparison';
+        button.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i>Run Sample Count Comparison';
         return;
     }
     
@@ -1011,7 +1018,7 @@ function compareSimulations() {
     })
     .finally(() => {
         button.disabled = false;
-        button.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i>Run Simulation Count Comparison';
+        button.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i>Run Sample Count Comparison';
     });
 }
 
@@ -1027,16 +1034,16 @@ function displayComparisonResults(comparisonData, container) {
     let html = `
         <div class="row">
             <div class="col-12">
-                <h6>Differences in Results by Simulation Count</h6>
+                <h6>Differences in Results by Random Portfolio Sample Count</h6>
                 <div class="table-responsive">
                     <table class="table table-sm">
                         <thead>
                             <tr>
-                                <th>Simulation Count</th>
+                                <th>Sample Count</th>
                                 <th>Average Return</th>
                                 <th>Average Risk</th>
                                 <th>Best Sharpe Ratio</th>
-                                <th>95% CI Width (Return)</th>
+                                <th>95% Allocation Interval Width (Return)</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1046,7 +1053,8 @@ function displayComparisonResults(comparisonData, container) {
         const data = comparisonData[count.toString()];
         if (data) {
             const returnStats = data.basic_stats.return_stats;
-            const ciWidth = data.confidence_intervals.return_ci_95[1] - data.confidence_intervals.return_ci_95[0];
+            const intervals = data.allocation_distribution_intervals || data.confidence_intervals;
+            const ciWidth = intervals.return_ci_95[1] - intervals.return_ci_95[0];
             
             html += `
                 <tr>
@@ -1076,7 +1084,7 @@ function displayComparisonResults(comparisonData, container) {
                 <div class="col-12">
                     <div class="alert alert-info">
                         <h6><i class="bi bi-graph-up me-2"></i>Convergence Analysis</h6>
-                        <p class="mb-1"><strong>Recommended Minimum Simulation Count:</strong> ${convergence.recommended_min_count.toLocaleString()} times</p>
+                        <p class="mb-1"><strong>Recommended Minimum Sample Count:</strong> ${convergence.recommended_min_count.toLocaleString()} samples</p>
                         <p class="mb-0"><small>Return Stability Coefficient: ${convergence.return_stability.coefficient_of_variation.toFixed(4)}</small></p>
                         <p class="mb-0"><small>Risk Stability Coefficient: ${convergence.risk_stability.coefficient_of_variation.toFixed(4)}</small></p>
                     </div>

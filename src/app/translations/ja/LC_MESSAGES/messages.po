@@ -60,11 +60,11 @@ msgstr "目標リターンを指定"
 msgid "Target Return (Annual %)"
 msgstr "目標リターン（年率%）"
 
-msgid "Simulation Count"
-msgstr "シミュレーション回数"
+msgid "Random Portfolio Sample Count"
+msgstr "ランダムポートフォリオ標本数"
 
-msgid "Number of Monte Carlo simulation trials"
-msgstr "モンテカルロシミュレーションの試行回数"
+msgid "Number of random portfolio allocation samples"
+msgstr "ランダムなポートフォリオ配分標本の数"
 
 msgid "Start Analysis"
 msgstr "分析開始"
@@ -90,8 +90,8 @@ msgstr "相関分析"
 msgid "Individual Assets"
 msgstr "個別資産"
 
-msgid "Simulation Details"
-msgstr "シミュレーション詳細"
+msgid "Random Portfolio Samples"
+msgstr "ランダムポートフォリオ標本"
 
 msgid "Data"
 msgstr "データ"
@@ -126,20 +126,20 @@ msgstr "シャープレシオ"
 msgid "Tail Percentiles"
 msgstr "テールパーセンタイル"
 
-msgid "Confidence Intervals"
-msgstr "信頼区間"
+msgid "Allocation Distribution Intervals"
+msgstr "配分分布区間"
 
 msgid "Efficiency Metrics"
 msgstr "効率性指標"
 
-msgid "Simulation Count Comparison"
-msgstr "シミュレーション回数比較"
+msgid "Sample Count Comparison"
+msgstr "標本数比較"
 
-msgid "You can check the difference in results with different simulation counts"
-msgstr "異なるシミュレーション回数での結果の違いを確認できます"
+msgid "You can check the difference in results with different random portfolio sample counts"
+msgstr "異なるランダムポートフォリオ標本数での結果の違いを確認できます"
 
-msgid "Run Simulation Count Comparison"
-msgstr "シミュレーション回数比較を実行"
+msgid "Run Sample Count Comparison"
+msgstr "標本数比較を実行"
 
 msgid "Individual Asset Statistics"
 msgstr "個別資産統計"
@@ -270,14 +270,14 @@ msgstr "最大値"
 msgid "Median"
 msgstr "中央値"
 
-msgid "95% Confidence Interval"
-msgstr "95%信頼区間"
+msgid "95% Allocation Distribution Interval"
+msgstr "95%配分分布区間"
 
-msgid "99% Confidence Interval"
-msgstr "99%信頼区間"
+msgid "99% Allocation Distribution Interval"
+msgstr "99%配分分布区間"
 
-msgid "Confidence intervals show the range containing 95%%/99%% of simulation results"
-msgstr "信頼区間はシミュレーション結果の95%%/99%%を含む範囲を示します"
+msgid "Allocation distribution intervals show the range containing 95%%/99%% of random portfolio samples"
+msgstr "配分分布区間はランダムポートフォリオ標本の95%%/99%%を含む範囲を示します"
 
 msgid "Return Lower Tail"
 msgstr "リターン下側テール"
@@ -312,8 +312,8 @@ msgstr "最適ポートフォリオ"
 msgid "Risk-adjusted Return"
 msgstr "リスク調整済みリターン"
 
-msgid "Simulations"
-msgstr "シミュレーション"
+msgid "Sample Count"
+msgstr "標本数"
 
 msgid "Execution Count"
 msgstr "実行回数"
@@ -443,9 +443,6 @@ msgstr "最適化に失敗しました"
 
 msgid "Failed to calculate efficient frontier"
 msgstr "効率的フロンティアの計算に失敗しました"
-
-msgid "Monte Carlo Simulation"
-msgstr "モンテカルロシミュレーション"
 
 msgid "Risk (Standard Deviation)"
 msgstr "リスク（標準偏差）"

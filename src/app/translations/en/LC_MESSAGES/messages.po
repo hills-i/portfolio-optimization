@@ -60,11 +60,11 @@ msgstr "Specify Target Return"
 msgid "Target Return (Annual %)"
 msgstr "Target Return (Annual %)"
 
-msgid "Simulation Count"
-msgstr "Simulation Count"
+msgid "Random Portfolio Sample Count"
+msgstr "Random Portfolio Sample Count"
 
-msgid "Number of Monte Carlo simulation trials"
-msgstr "Number of Monte Carlo simulation trials"
+msgid "Number of random portfolio allocation samples"
+msgstr "Number of random portfolio allocation samples"
 
 msgid "Start Analysis"
 msgstr "Start Analysis"
@@ -90,8 +90,8 @@ msgstr "Correlation Analysis"
 msgid "Individual Assets"
 msgstr "Individual Assets"
 
-msgid "Simulation Details"
-msgstr "Simulation Details"
+msgid "Random Portfolio Samples"
+msgstr "Random Portfolio Samples"
 
 msgid "Data"
 msgstr "Data"
@@ -126,20 +126,20 @@ msgstr "Sharpe Ratio"
 msgid "Tail Percentiles"
 msgstr "Tail Percentiles"
 
-msgid "Confidence Intervals"
-msgstr "Confidence Intervals"
+msgid "Allocation Distribution Intervals"
+msgstr "Allocation Distribution Intervals"
 
 msgid "Efficiency Metrics"
 msgstr "Efficiency Metrics"
 
-msgid "Simulation Count Comparison"
-msgstr "Simulation Count Comparison"
+msgid "Sample Count Comparison"
+msgstr "Sample Count Comparison"
 
-msgid "You can check the difference in results with different simulation counts"
-msgstr "You can check the difference in results with different simulation counts"
+msgid "You can check the difference in results with different random portfolio sample counts"
+msgstr "You can check the difference in results with different random portfolio sample counts"
 
-msgid "Run Simulation Count Comparison"
-msgstr "Run Simulation Count Comparison"
+msgid "Run Sample Count Comparison"
+msgstr "Run Sample Count Comparison"
 
 msgid "Individual Asset Statistics"
 msgstr "Individual Asset Statistics"
@@ -270,14 +270,14 @@ msgstr "Max"
 msgid "Median"
 msgstr "Median"
 
-msgid "95% Confidence Interval"
-msgstr "95% Confidence Interval"
+msgid "95% Allocation Distribution Interval"
+msgstr "95% Allocation Distribution Interval"
 
-msgid "99% Confidence Interval"
-msgstr "99% Confidence Interval"
+msgid "99% Allocation Distribution Interval"
+msgstr "99% Allocation Distribution Interval"
 
-msgid "Confidence intervals show the range containing 95%%/99%% of simulation results"
-msgstr "Confidence intervals show the range containing 95%%/99%% of simulation results"
+msgid "Allocation distribution intervals show the range containing 95%%/99%% of random portfolio samples"
+msgstr "Allocation distribution intervals show the range containing 95%%/99%% of random portfolio samples"
 
 msgid "Return Lower Tail"
 msgstr "Return Lower Tail"
@@ -312,11 +312,8 @@ msgstr "Optimal Portfolio"
 msgid "Risk-adjusted Return"
 msgstr "Risk-adjusted Return"
 
-msgid "Simulations"
-msgstr "Simulations"
-
-msgid "Execution Count"
-msgstr "Execution Count"
+msgid "Sample Count"
+msgstr "Sample Count"
 
 msgid "Portfolios Above Risk-Free Rate"
 msgstr "Portfolios Above Risk-Free Rate"
@@ -443,9 +440,6 @@ msgstr "Optimization failed"
 
 msgid "Failed to calculate efficient frontier"
 msgstr "Failed to calculate efficient frontier"
-
-msgid "Monte Carlo Simulation"
-msgstr "Monte Carlo Simulation"
 
 msgid "Risk (Standard Deviation)"
 msgstr "Risk (Standard Deviation)"
