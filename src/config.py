@@ -21,6 +21,8 @@ class Config:
     
     # Calculation settings
     DEFAULT_RISK_FREE_RATE = 0.01  # 1% (reference value based on 10-year Japanese government bonds)
+    MIN_RISK_FREE_RATE = -0.05
+    MAX_RISK_FREE_RATE = 0.20
     DEFAULT_SIMULATION_COUNT = 10000
     MIN_SIMULATION_COUNT = 1000
     MAX_SIMULATION_COUNT = 50000

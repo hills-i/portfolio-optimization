@@ -381,11 +381,17 @@ msgstr "目標リターンが非常に高く設定されています"
 msgid "Target return is set very low"
 msgstr "目標リターンが非常に低く設定されています"
 
-msgid "Risk-free rate must be 0%% or higher"
-msgstr "無リスク金利は0%%以上である必要があります"
+msgid "Risk-free rate must be %(min_rate)s%% or higher"
+msgstr "無リスク金利は%(min_rate)s%%以上である必要があります"
 
-msgid "Risk-free rate must be 10%% or lower"
-msgstr "無リスク金利は10%%以下である必要があります"
+msgid "Risk-free rate must be %(max_rate)s%% or lower"
+msgstr "無リスク金利は%(max_rate)s%%以下である必要があります"
+
+msgid "Risk-free rate is negative"
+msgstr "無リスク金利がマイナスに設定されています"
+
+msgid "Risk-free rate is unusually high"
+msgstr "無リスク金利が非常に高く設定されています"
 
 msgid "Simulation count must be at least %s"
 msgstr "シミュレーション回数は最低%s回である必要があります"

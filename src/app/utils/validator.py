@@ -159,14 +159,26 @@ class InputValidator:
             'warnings': []
         }
         
-        # Range check (0% to 10%)
-        if risk_free_rate < 0:
+        min_rate = self.config.MIN_RISK_FREE_RATE
+        max_rate = self.config.MAX_RISK_FREE_RATE
+
+        if risk_free_rate < min_rate:
             result['valid'] = False
-            result['errors'].append(_('Risk-free rate must be 0% or higher'))
+            result['errors'].append(_('Risk-free rate must be %(min_rate)s%% or higher') % {
+                'min_rate': f'{min_rate * 100:g}'
+            })
             
-        if risk_free_rate > 0.1:
+        if risk_free_rate > max_rate:
             result['valid'] = False
-            result['errors'].append(_('Risk-free rate must be 10% or lower'))
+            result['errors'].append(_('Risk-free rate must be %(max_rate)s%% or lower') % {
+                'max_rate': f'{max_rate * 100:g}'
+            })
+
+        if result['valid'] and risk_free_rate < 0.0:
+            result['warnings'].append(_('Risk-free rate is negative'))
+
+        if result['valid'] and risk_free_rate > 0.10:
+            result['warnings'].append(_('Risk-free rate is unusually high'))
         
         return result
     

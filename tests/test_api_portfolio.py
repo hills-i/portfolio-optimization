@@ -25,6 +25,31 @@ class TestValidateInputsEndpoint:
         data = resp.get_json()
         assert data['valid'] is True
 
+    def test_negative_risk_free_rate_valid_with_warning(self, client):
+        resp = client.post('/api/validate', json={
+            'tickers': ['AAPL', 'GOOGL'],
+            'start_date': '2022-01-01',
+            'end_date': '2024-01-01',
+            'risk_free_rate': -0.005,
+            'simulation_count': 10000
+        })
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data['valid'] is True
+        assert len(data['warnings']) > 0
+
+    def test_extreme_risk_free_rate_invalid(self, client):
+        resp = client.post('/api/validate', json={
+            'tickers': ['AAPL', 'GOOGL'],
+            'start_date': '2022-01-01',
+            'end_date': '2024-01-01',
+            'risk_free_rate': -0.20,
+            'simulation_count': 10000
+        })
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data['valid'] is False
+
     def test_invalid_input(self, client):
         resp = client.post('/api/validate', json={
             'tickers': ['AAPL'],  # too few
@@ -211,6 +236,38 @@ class TestAnalyzePortfolioEndpoint:
         }
 
     @patch('app.api.portfolio.DataFetcher')
+    def test_analysis_accepts_negative_risk_free_rate_with_warning(self, mock_fetcher_cls, client):
+        mock_instance = MagicMock()
+        mock_instance.fetch_stock_data.return_value = self._make_fetch_result()
+        mock_fetcher_cls.return_value = mock_instance
+
+        resp = client.post('/api/analyze', json={
+            'tickers': ['AAPL', 'GOOGL'],
+            'start_date': '2022-01-01',
+            'end_date': '2024-01-01',
+            'simulation_count': 1000,
+            'risk_free_rate': -0.005
+        })
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data['success'] is True
+        assert len(data['warnings']) > 0
+
+    @patch('app.api.portfolio.DataFetcher')
+    def test_analysis_rejects_extreme_risk_free_rate_before_fetch(self, mock_fetcher_cls, client):
+        resp = client.post('/api/analyze', json={
+            'tickers': ['AAPL', 'GOOGL'],
+            'start_date': '2022-01-01',
+            'end_date': '2024-01-01',
+            'simulation_count': 1000,
+            'risk_free_rate': -0.20
+        })
+        assert resp.status_code == 400
+        data = resp.get_json()
+        assert 'validation_errors' in data
+        mock_fetcher_cls.assert_not_called()
+
+    @patch('app.api.portfolio.DataFetcher')
     def test_analysis_with_target_return(self, mock_fetcher_cls, client):
         mock_instance = MagicMock()
         mock_instance.fetch_stock_data.return_value = self._make_fetch_result()
@@ -317,6 +374,47 @@ class TestCompareSimulationsEndpoint:
         data = resp.get_json()
         assert data['success'] is True
         assert 'comparison_results' in data
+
+    @patch('app.api.portfolio.DataFetcher')
+    def test_comparison_accepts_negative_risk_free_rate(self, mock_fetcher_cls, client):
+        np.random.seed(42)
+        dates = pd.bdate_range(start='2023-01-02', periods=100)
+        df = pd.DataFrame({
+            'AAPL': 150 * np.cumprod(1 + np.random.normal(0.0005, 0.015, 100)),
+            'GOOGL': 140 * np.cumprod(1 + np.random.normal(0.0005, 0.015, 100)),
+        }, index=dates)
+
+        mock_instance = MagicMock()
+        mock_instance.fetch_stock_data.return_value = {
+            'success': True, 'data': df, 'errors': [], 'warnings': [],
+            'metadata': {'tickers_requested': ['AAPL', 'GOOGL'], 'tickers_success': ['AAPL', 'GOOGL'],
+                         'tickers_failed': [], 'start_date': '2023-01-01', 'end_date': '2023-12-31', 'total_records': 100}
+        }
+        mock_fetcher_cls.return_value = mock_instance
+
+        resp = client.post('/api/compare-simulations', json={
+            'tickers': ['AAPL', 'GOOGL'],
+            'start_date': '2022-01-01',
+            'end_date': '2024-01-01',
+            'simulation_counts': [100, 200],
+            'risk_free_rate': -0.005
+        })
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data['success'] is True
+
+    @patch('app.api.portfolio.DataFetcher')
+    def test_comparison_rejects_extreme_risk_free_rate_before_fetch(self, mock_fetcher_cls, client):
+        resp = client.post('/api/compare-simulations', json={
+            'tickers': ['AAPL', 'GOOGL'],
+            'start_date': '2022-01-01',
+            'end_date': '2024-01-01',
+            'risk_free_rate': 0.201
+        })
+        assert resp.status_code == 400
+        data = resp.get_json()
+        assert 'validation_errors' in data
+        mock_fetcher_cls.assert_not_called()
 
     @patch('app.api.portfolio.DataFetcher')
     def test_data_fetch_failure(self, mock_fetcher_cls, client):

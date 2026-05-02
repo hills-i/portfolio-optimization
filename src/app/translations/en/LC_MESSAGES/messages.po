@@ -378,11 +378,17 @@ msgstr "Target return is set very high"
 msgid "Target return is set very low"
 msgstr "Target return is set very low"
 
-msgid "Risk-free rate must be 0%% or higher"
-msgstr "Risk-free rate must be 0%% or higher"
+msgid "Risk-free rate must be %(min_rate)s%% or higher"
+msgstr "Risk-free rate must be %(min_rate)s%% or higher"
 
-msgid "Risk-free rate must be 10%% or lower"
-msgstr "Risk-free rate must be 10%% or lower"
+msgid "Risk-free rate must be %(max_rate)s%% or lower"
+msgstr "Risk-free rate must be %(max_rate)s%% or lower"
+
+msgid "Risk-free rate is negative"
+msgstr "Risk-free rate is negative"
+
+msgid "Risk-free rate is unusually high"
+msgstr "Risk-free rate is unusually high"
 
 msgid "Simulation count must be at least %s"
 msgstr "Simulation count must be at least %s"

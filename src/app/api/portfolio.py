@@ -33,6 +33,8 @@ def create_validation_config():
         MAX_ASSETS = current_app.config.get('MAX_ASSETS', 20)
         MIN_ANALYSIS_YEARS = current_app.config.get('MIN_ANALYSIS_YEARS', 1)
         MAX_ANALYSIS_YEARS = current_app.config.get('MAX_ANALYSIS_YEARS', 10)
+        MIN_RISK_FREE_RATE = current_app.config.get('MIN_RISK_FREE_RATE', -0.05)
+        MAX_RISK_FREE_RATE = current_app.config.get('MAX_RISK_FREE_RATE', 0.20)
         MIN_SIMULATION_COUNT = current_app.config.get('MIN_SIMULATION_COUNT', 1000)
         MAX_SIMULATION_COUNT = current_app.config.get('MAX_SIMULATION_COUNT', 50000)
     
@@ -170,7 +172,10 @@ def analyze_portfolio():
         results = {
             'success': True,
             'metadata': fetch_result['metadata'],
-            'warnings': fetch_result.get('warnings', []),
+            'warnings': [
+                *validation_result.get('warnings', []),
+                *fetch_result.get('warnings', [])
+            ],
             'optimal_portfolios': {},
             'optimization_errors': {},
             'risk_metric_metadata': {

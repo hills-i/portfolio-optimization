@@ -55,6 +55,8 @@ def mock_config():
         MAX_ASSETS = 20
         MIN_ANALYSIS_YEARS = 1
         MAX_ANALYSIS_YEARS = 31
+        MIN_RISK_FREE_RATE = -0.05
+        MAX_RISK_FREE_RATE = 0.20
         MIN_SIMULATION_COUNT = 1000
         MAX_SIMULATION_COUNT = 50000
     return MockConfig()

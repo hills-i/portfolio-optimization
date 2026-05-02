@@ -16,6 +16,11 @@ class TestConfig:
         from config import Config
         assert Config.DEFAULT_RISK_FREE_RATE == 0.01
 
+    def test_risk_free_rate_bounds(self):
+        from config import Config
+        assert Config.MIN_RISK_FREE_RATE == -0.05
+        assert Config.MAX_RISK_FREE_RATE == 0.20
+
     def test_default_simulation_count(self):
         from config import Config
         assert Config.DEFAULT_SIMULATION_COUNT == 10000

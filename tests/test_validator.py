@@ -238,18 +238,46 @@ class TestValidateRiskFreeRate:
 
     def test_boundary_max(self, app_context, mock_config):
         v = self._make_validator(mock_config)
-        r = v.validate_risk_free_rate(0.1)
+        r = v.validate_risk_free_rate(0.20)
         assert r['valid'] is True
 
-    def test_negative(self, app_context, mock_config):
+    def test_negative_within_bounds_warns(self, app_context, mock_config):
         v = self._make_validator(mock_config)
-        r = v.validate_risk_free_rate(-0.01)
+        r = v.validate_risk_free_rate(-0.005)
+        assert r['valid'] is True
+        assert len(r['warnings']) > 0
+
+    def test_boundary_min(self, app_context, mock_config):
+        v = self._make_validator(mock_config)
+        r = v.validate_risk_free_rate(-0.05)
+        assert r['valid'] is True
+
+    def test_below_min(self, app_context, mock_config):
+        v = self._make_validator(mock_config)
+        r = v.validate_risk_free_rate(-0.051)
         assert r['valid'] is False
 
     def test_above_max(self, app_context, mock_config):
         v = self._make_validator(mock_config)
-        r = v.validate_risk_free_rate(0.11)
+        r = v.validate_risk_free_rate(0.201)
         assert r['valid'] is False
+
+    def test_extremely_negative_invalid(self, app_context, mock_config):
+        v = self._make_validator(mock_config)
+        r = v.validate_risk_free_rate(-0.20)
+        assert r['valid'] is False
+
+    def test_high_within_bounds_warns(self, app_context, mock_config):
+        v = self._make_validator(mock_config)
+        r = v.validate_risk_free_rate(0.11)
+        assert r['valid'] is True
+        assert len(r['warnings']) > 0
+
+    def test_no_warning_normal(self, app_context, mock_config):
+        v = self._make_validator(mock_config)
+        r = v.validate_risk_free_rate(0.01)
+        assert r['valid'] is True
+        assert r['warnings'] == []
 
 
 # ──────────────────────────────────────────────
