@@ -217,6 +217,33 @@ class TestAnalyzePortfolioEndpoint:
             assert data['optimal_portfolios']['target_return']['success'] is True
 
     @patch('app.api.portfolio.DataFetcher')
+    def test_analysis_with_infeasible_target_return_reports_error(self, mock_fetcher_cls, client):
+        mock_instance = MagicMock()
+        mock_instance.fetch_stock_data.return_value = self._make_fetch_result()
+        mock_fetcher_cls.return_value = mock_instance
+
+        resp = client.post('/api/analyze', json={
+            'tickers': ['AAPL', 'GOOGL'],
+            'start_date': '2022-01-01',
+            'end_date': '2024-01-01',
+            'simulation_count': 1000,
+            'target_return': 1.0
+        })
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data['success'] is True
+        assert 'target_return' not in data['optimal_portfolios']
+
+        target_error = data['optimization_errors']['target_return']
+        assert target_error['optimization_type'] == 'min_risk'
+        assert target_error['target_return'] == 1.0
+        assert target_error['target_return_achieved'] is False
+        assert target_error['optimizer_success'] is False
+        assert target_error['target_return_gap'] < 0
+        assert 'optimizer_message' in target_error
+        assert 'Target return optimization failed or was infeasible' in data['warnings']
+
+    @patch('app.api.portfolio.DataFetcher')
     def test_analysis_with_language(self, mock_fetcher_cls, client):
         mock_instance = MagicMock()
         mock_instance.fetch_stock_data.return_value = self._make_fetch_result()

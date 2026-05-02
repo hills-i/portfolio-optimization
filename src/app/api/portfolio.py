@@ -171,6 +171,8 @@ def analyze_portfolio():
             'success': True,
             'metadata': fetch_result['metadata'],
             'warnings': fetch_result.get('warnings', []),
+            'optimal_portfolios': {},
+            'optimization_errors': {},
             'risk_metric_metadata': {
                 'var': {
                     'method': 'parametric_normal',
@@ -219,9 +221,7 @@ def analyze_portfolio():
         # 1. Maximum Sharpe ratio portfolio
         max_sharpe_result = calculator.optimize_portfolio()
         if max_sharpe_result['success']:
-            results['optimal_portfolios'] = {
-                'max_sharpe': max_sharpe_result
-            }
+            results['optimal_portfolios']['max_sharpe'] = max_sharpe_result
             
             # Risk decomposition analysis
             weights_array = np.array(list(max_sharpe_result['weights'].values()))
@@ -238,6 +238,18 @@ def analyze_portfolio():
                 weights_array = np.array(list(min_risk_result['weights'].values()))
                 risk_decomp = calculator.risk_decomposition(weights_array)
                 results['optimal_portfolios']['target_return']['risk_decomposition'] = risk_decomp
+            else:
+                results['optimization_errors']['target_return'] = {
+                    'optimization_type': min_risk_result.get('optimization_type'),
+                    'target_return': min_risk_result.get('target_return'),
+                    'target_return_gap': min_risk_result.get('target_return_gap'),
+                    'target_return_achieved': min_risk_result.get('target_return_achieved'),
+                    'optimizer_success': min_risk_result.get('optimizer_success'),
+                    'optimizer_message': min_risk_result.get('optimizer_message')
+                }
+                results['warnings'].append(
+                    'Target return optimization failed or was infeasible'
+                )
         
         # 3. Minimum variance portfolio (pure minimum variance without constraints)
         # Minimize variance without target return constraint
@@ -250,8 +262,6 @@ def analyze_portfolio():
             min_expected_return = min(asset_stats[asset]['expected_return'] for asset in asset_stats)
             min_var_result = calculator.optimize_portfolio(target_return=min_expected_return)
         if min_var_result['success']:
-            if 'optimal_portfolios' not in results:
-                results['optimal_portfolios'] = {}
             results['optimal_portfolios']['min_variance'] = min_var_result
             
             # Risk decomposition analysis

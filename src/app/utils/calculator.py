@@ -299,6 +299,46 @@ class PortfolioCalculator:
             raise ValueError(_('Data not loaded. Call load_data() first.'))
         
         num_assets = len(self.mean_returns)
+        optimization_type = "max_sharpe" if target_return is None else "min_risk"
+
+        if target_return is not None:
+            tolerance = 1e-8
+            min_feasible_return = float(self.mean_returns.min())
+            max_feasible_return = float(self.mean_returns.max())
+
+            if (
+                target_return < min_feasible_return - tolerance or
+                target_return > max_feasible_return + tolerance
+            ):
+                nearest_feasible_return = (
+                    min_feasible_return
+                    if target_return < min_feasible_return
+                    else max_feasible_return
+                )
+                target_return_gap = float(nearest_feasible_return - target_return)
+                message = _(
+                    'Target return is outside the feasible long-only return range'
+                )
+                logger.warning(
+                    "%s: target=%s, feasible_range=[%s, %s]",
+                    message,
+                    target_return,
+                    min_feasible_return,
+                    max_feasible_return
+                )
+                return {
+                    'success': False,
+                    'optimization_type': optimization_type,
+                    'target_return': target_return,
+                    'target_return_achieved': False,
+                    'target_return_gap': target_return_gap,
+                    'optimizer_success': False,
+                    'optimizer_message': message,
+                    'feasible_return_range': {
+                        'min': min_feasible_return,
+                        'max': max_feasible_return
+                    }
+                }
         
         # Initial value (equal weights).
         initial_weights = np.array([1.0 / num_assets] * num_assets)
@@ -322,15 +362,11 @@ class PortfolioCalculator:
                 def objective(weights):
                     metrics = self.calculate_portfolio_metrics(weights)
                     return -metrics['sharpe_ratio']  # Negate for maximization.
-                
-                optimization_type = "max_sharpe"
             else:
                 # Minimum-variance portfolio
                 def objective(weights):
                     metrics = self.calculate_portfolio_metrics(weights)
                     return metrics['variance']
-                
-                optimization_type = "min_risk"
             
             # Run the optimization.
             result = minimize(
@@ -361,7 +397,7 @@ class PortfolioCalculator:
             
             # Assemble the result.
             optimization_result = {
-                'success': True,
+                'success': bool(result.success),
                 'optimization_type': optimization_type,
                 'weights': {asset: weight for asset, weight in zip(self.mean_returns.index, optimal_weights)},
                 'metrics': optimal_metrics,
@@ -372,7 +408,8 @@ class PortfolioCalculator:
                 'optimizer_message': result.message
             }
             
-            logger.info(f"Portfolio optimization completed: {optimization_type}")
+            if result.success:
+                logger.info(f"Portfolio optimization completed: {optimization_type}")
             
             return optimization_result
             
@@ -380,7 +417,11 @@ class PortfolioCalculator:
             logger.error(f"Portfolio optimization failed: {str(e)}")
             return {
                 'success': False,
-                'error': str(e)
+                'error': str(e),
+                'optimization_type': optimization_type,
+                'target_return': target_return,
+                'optimizer_success': False,
+                'optimizer_message': str(e)
             }
     
     def calculate_efficient_frontier(self, num_portfolios: int = 50) -> pd.DataFrame:
