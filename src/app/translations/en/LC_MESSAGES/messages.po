@@ -330,8 +330,11 @@ msgstr "Best Sharpe Ratio"
 msgid "Minimum Risk"
 msgstr "Minimum Risk"
 
-msgid "VaR (95%)"
-msgstr "VaR (95%)"
+msgid "Annual VaR (95%)"
+msgstr "Annual VaR (95%)"
+
+msgid "Annual VaR (99%)"
+msgstr "Annual VaR (99%)"
 
 msgid "No data"
 msgstr "No data"

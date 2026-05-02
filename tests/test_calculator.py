@@ -4,6 +4,7 @@ Tests for calculator.py.
 import pytest
 import numpy as np
 import pandas as pd
+from scipy.stats import norm
 from unittest.mock import patch, MagicMock
 
 
@@ -68,10 +69,35 @@ class TestCalculatePortfolioMetrics:
         assert 'risk' in metrics
         assert 'sharpe_ratio' in metrics
         assert 'variance' in metrics
+        assert 'annual_return_p05' in metrics
+        assert 'annual_return_p01' in metrics
+        assert 'var_95' in metrics
+        assert 'var_99' in metrics
         assert metrics['risk'] >= 0
         assert metrics['variance'] >= 0
         # variance = risk^2
         assert abs(metrics['variance'] - metrics['risk'] ** 2) < 1e-10
+
+    def test_downside_metrics_calculation(self, app_context):
+        from app.utils.calculator import PortfolioCalculator
+        metrics = PortfolioCalculator.calculate_annual_normal_downside_metrics(0.10, 0.20)
+
+        expected_p05 = 0.10 - abs(norm.ppf(0.05)) * 0.20
+        expected_p01 = 0.10 - abs(norm.ppf(0.01)) * 0.20
+
+        assert abs(metrics['annual_return_p05'] - expected_p05) < 1e-12
+        assert abs(metrics['annual_return_p01'] - expected_p01) < 1e-12
+        assert abs(metrics['var_95'] - max(0.0, -expected_p05)) < 1e-12
+        assert abs(metrics['var_99'] - max(0.0, -expected_p01)) < 1e-12
+
+    def test_downside_metrics_floor_negative_loss_at_zero(self, app_context):
+        from app.utils.calculator import PortfolioCalculator
+        metrics = PortfolioCalculator.calculate_annual_normal_downside_metrics(0.50, 0.01)
+
+        assert metrics['annual_return_p05'] > 0
+        assert metrics['annual_return_p01'] > 0
+        assert metrics['var_95'] == 0.0
+        assert metrics['var_99'] == 0.0
 
     def test_concentrated_weight(self, app_context, loaded_calculator):
         """Allocate 100% to a single asset."""
@@ -241,6 +267,8 @@ class TestCalculateAssetStatistics:
             assert 'kurtosis' in s
             assert 'min_return' in s
             assert 'max_return' in s
+            assert 'annual_return_p05' in s
+            assert 'annual_return_p01' in s
             assert 'var_95' in s
             assert 'var_99' in s
 
@@ -249,10 +277,13 @@ class TestCalculateAssetStatistics:
         for asset, s in stats.items():
             assert s['risk'] > 0
 
-    def test_var_99_less_than_var_95(self, app_context, loaded_calculator):
+    def test_var_and_return_quantile_ordering(self, app_context, loaded_calculator):
         stats = loaded_calculator.calculate_asset_statistics()
         for asset, s in stats.items():
-            assert s['var_99'] <= s['var_95']
+            assert s['var_99'] >= s['var_95']
+            assert s['var_95'] >= 0
+            assert s['var_99'] >= 0
+            assert s['annual_return_p01'] <= s['annual_return_p05']
 
     def test_raises_without_data(self, app_context):
         from app.utils.calculator import PortfolioCalculator

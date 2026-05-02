@@ -16,6 +16,24 @@ class PortfolioCalculator:
         self.mean_returns = None
         self.cov_matrix = None
         self.risk_free_rate = 0.0
+
+    @staticmethod
+    def calculate_annual_normal_downside_metrics(annual_mean: float, annual_std: float) -> Dict[str, float]:
+        """
+        Calculate annual lower-tail return quantiles and positive-loss VaR.
+
+        VaR is reported as a nonnegative annual return-rate loss, not a
+        currency amount.
+        """
+        annual_return_p05 = annual_mean - abs(norm.ppf(0.05)) * annual_std
+        annual_return_p01 = annual_mean - abs(norm.ppf(0.01)) * annual_std
+
+        return {
+            'annual_return_p05': annual_return_p05,
+            'annual_return_p01': annual_return_p01,
+            'var_95': max(0.0, -annual_return_p05),
+            'var_99': max(0.0, -annual_return_p01)
+        }
     
     def load_data(self, price_data: pd.DataFrame, risk_free_rate: float = 0.0) -> bool:
         """
@@ -72,7 +90,8 @@ class PortfolioCalculator:
             'expected_return': expected_return,
             'risk': portfolio_risk,
             'sharpe_ratio': sharpe_ratio,
-            'variance': portfolio_variance
+            'variance': portfolio_variance,
+            **self.calculate_annual_normal_downside_metrics(expected_return, portfolio_risk)
         }
     
     def monte_carlo_simulation(self, num_simulations: int = 10000) -> pd.DataFrame:
@@ -442,8 +461,7 @@ class PortfolioCalculator:
                 'kurtosis': asset_returns.kurtosis(),
                 'min_return': asset_returns.min(),
                 'max_return': asset_returns.max(),
-                'var_95': annual_mean - 1.645 * annual_std,  # 95% parametric VaR (annualized)
-                'var_99': annual_mean - 2.326 * annual_std   # 99% parametric VaR (annualized)
+                **self.calculate_annual_normal_downside_metrics(annual_mean, annual_std)
             }
         
         return stats

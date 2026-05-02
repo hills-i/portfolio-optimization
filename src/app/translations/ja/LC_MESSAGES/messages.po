@@ -330,8 +330,11 @@ msgstr "最高シャープレシオ"
 msgid "Minimum Risk"
 msgstr "最小リスク"
 
-msgid "VaR (95%)"
-msgstr "VaR (95%)"
+msgid "Annual VaR (95%)"
+msgstr "年間VaR (95%)"
+
+msgid "Annual VaR (99%)"
+msgstr "年間VaR (99%)"
 
 msgid "No data"
 msgstr "データなし"

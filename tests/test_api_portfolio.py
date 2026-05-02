@@ -190,6 +190,13 @@ class TestAnalyzePortfolioEndpoint:
         assert 'monte_carlo' in data
         assert 'asset_statistics' in data
         assert 'correlation_matrix' in data
+        assert data['risk_metric_metadata']['var'] == {
+            'method': 'parametric_normal',
+            'horizon': 'annual',
+            'unit': 'return_rate',
+            'confidence_levels': [0.95, 0.99],
+            'negative_loss_floor': 0.0
+        }
 
     @patch('app.api.portfolio.DataFetcher')
     def test_analysis_with_target_return(self, mock_fetcher_cls, client):

@@ -170,7 +170,16 @@ def analyze_portfolio():
         results = {
             'success': True,
             'metadata': fetch_result['metadata'],
-            'warnings': fetch_result.get('warnings', [])
+            'warnings': fetch_result.get('warnings', []),
+            'risk_metric_metadata': {
+                'var': {
+                    'method': 'parametric_normal',
+                    'horizon': 'annual',
+                    'unit': 'return_rate',
+                    'confidence_levels': [0.95, 0.99],
+                    'negative_loss_floor': 0.0
+                }
+            }
         }
         
         # Individual asset statistics

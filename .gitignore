@@ -46,7 +46,7 @@ analyze_result.json
 visualize_result.json
 *.db
 *.sqlite3
-
+docs
 src/analyze_result.json
 src/visualize_result.json
 

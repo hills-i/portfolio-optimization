@@ -349,12 +349,14 @@ function updateMetricsTable(portfolioData, tableId) {
     }
 
     const metrics = portfolioData.metrics;
+    const formatOptionalPercent = value => value !== null && value !== undefined ? formatPercent(value) : 'N/A';
     
     const metricsData = [
         { label: _('Expected Return'), value: formatPercent(metrics.expected_return), class: 'metrics-positive' },
         { label: _('Risk (Standard Deviation)'), value: formatPercent(metrics.risk), class: 'metrics-neutral' },
         { label: _('Sharpe Ratio'), value: formatNumber(metrics.sharpe_ratio), class: metrics.sharpe_ratio > 0 ? 'metrics-positive' : 'metrics-negative' },
-        { label: _('VaR (95%)'), value: metrics.var_95 ? formatPercent(metrics.var_95) : 'N/A', class: 'metrics-neutral' }
+        { label: _('Annual VaR (95%)'), value: formatOptionalPercent(metrics.var_95), class: 'metrics-neutral' },
+        { label: _('Annual VaR (99%)'), value: formatOptionalPercent(metrics.var_99), class: 'metrics-neutral' }
     ];
 
     if (portfolioData.target_return !== null && portfolioData.target_return !== undefined) {
