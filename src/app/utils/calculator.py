@@ -451,9 +451,17 @@ class PortfolioCalculator:
         
         logger.info(f"Calculating efficient frontier with {num_portfolios} portfolios")
         
-        # Define the return range.
-        min_ret = self.mean_returns.min()
-        max_ret = self.mean_returns.max()
+        gmv_result = self.optimize_min_variance_portfolio()
+        if not gmv_result.get('success'):
+            logger.warning(
+                "Failed to calculate global minimum variance portfolio before frontier: %s",
+                gmv_result.get('error', gmv_result.get('optimizer_message', 'unknown error'))
+            )
+            raise ValueError(_('Failed to calculate global minimum variance portfolio'))
+
+        # Efficient frontier starts at the global minimum variance portfolio.
+        min_ret = float(gmv_result['metrics']['expected_return'])
+        max_ret = float(self.mean_returns.max())
         target_returns = np.linspace(min_ret, max_ret, num_portfolios)
         
         efficient_portfolios = []
@@ -467,7 +475,9 @@ class PortfolioCalculator:
                         'target_return': target_ret,
                         'expected_return': result['metrics']['expected_return'],
                         'risk': result['metrics']['risk'],
-                        'sharpe_ratio': result['metrics']['sharpe_ratio']
+                        'sharpe_ratio': result['metrics']['sharpe_ratio'],
+                        'optimizer_success': result.get('optimizer_success'),
+                        'optimizer_message': result.get('optimizer_message')
                     }
                     
                     # Add per-asset weights as well.

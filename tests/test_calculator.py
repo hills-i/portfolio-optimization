@@ -242,12 +242,51 @@ class TestCalculateEfficientFrontier:
         assert 'expected_return' in ef.columns
         assert 'risk' in ef.columns
         assert 'sharpe_ratio' in ef.columns
+        assert 'optimizer_success' in ef.columns
+        assert 'optimizer_message' in ef.columns
 
     def test_num_portfolios(self, app_context, loaded_calculator):
         ef = loaded_calculator.calculate_efficient_frontier(num_portfolios=10)
         # Not every optimization must succeed, but at least some portfolios should be generated.
         assert len(ef) > 0
         assert len(ef) <= 10
+        assert ef['optimizer_success'].all()
+
+    def test_frontier_starts_at_global_minimum_variance_return(self, app_context, loaded_calculator):
+        gmv = loaded_calculator.optimize_min_variance_portfolio()
+        assert gmv['success'] is True
+
+        ef = loaded_calculator.calculate_efficient_frontier(num_portfolios=20)
+        gmv_return = gmv['metrics']['expected_return']
+
+        assert ef['target_return'].min() >= gmv_return - 1e-8
+        assert ef['expected_return'].min() >= gmv_return - 1e-4
+
+    def test_deterministic_two_asset_frontier_excludes_lower_branch(self, app_context):
+        from app.utils.calculator import PortfolioCalculator
+
+        daily_returns = pd.DataFrame({
+            'LOW_RETURN': [0.011, -0.009] * 20,
+            'HIGH_RETURN': [-0.007, 0.013] * 20
+        })
+        prices = 100 * (1 + daily_returns).cumprod()
+        prices.loc[-1] = [100.0, 100.0]
+        prices = prices.sort_index().reset_index(drop=True)
+
+        calc = PortfolioCalculator()
+        assert calc.load_data(prices) is True
+
+        gmv = calc.optimize_min_variance_portfolio()
+        assert gmv['success'] is True
+        min_asset_return = float(calc.mean_returns.min())
+        gmv_return = gmv['metrics']['expected_return']
+        assert gmv_return > min_asset_return
+
+        ef = calc.calculate_efficient_frontier(num_portfolios=12)
+
+        assert ef['target_return'].min() >= gmv_return - 1e-8
+        assert ef['expected_return'].min() >= gmv_return - 1e-4
+        assert not (ef['target_return'] < gmv_return - 1e-8).any()
 
     def test_raises_without_data(self, app_context):
         from app.utils.calculator import PortfolioCalculator
