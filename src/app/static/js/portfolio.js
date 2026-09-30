@@ -216,11 +216,13 @@ async function generateCharts(results) {
         const errorMessage = `
             <div class="alert alert-warning text-center">
                 <i class="bi bi-exclamation-triangle me-2"></i>
-                An error occurred during chart generation: ${error.message}
+                An error occurred during chart generation: <span class="error-detail"></span>
             </div>
         `;
-        
-        document.getElementById('frontierChart').innerHTML = errorMessage;
+
+        const frontierChart = document.getElementById('frontierChart');
+        frontierChart.innerHTML = errorMessage;
+        frontierChart.querySelector('.error-detail').textContent = error.message;
     }
 }
 
@@ -981,13 +983,8 @@ function compareSimulations() {
     button.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i>Running...';
     
     // Get current settings
-    const formData = getFormData();
-    if (!formData) {
-        button.disabled = false;
-        button.innerHTML = '<i class="bi bi-arrow-repeat me-2"></i>Run Sample Count Comparison';
-        return;
-    }
-    
+    const formData = getPortfolioFormData();
+
     // Simulation counts to compare
     formData.simulation_counts = [100, 1000, 5000, 10000];
     
@@ -1011,9 +1008,10 @@ function compareSimulations() {
         resultContainer.innerHTML = `
             <div class="alert alert-danger">
                 <i class="bi bi-exclamation-triangle me-2"></i>
-                An error occurred during comparison processing: ${error.message}
+                An error occurred during comparison processing: <span class="error-detail"></span>
             </div>
         `;
+        resultContainer.querySelector('.error-detail').textContent = error.message;
         resultContainer.style.display = 'block';
     })
     .finally(() => {
@@ -1095,35 +1093,4 @@ function displayComparisonResults(comparisonData, container) {
     
     container.innerHTML = html;
     container.style.display = 'block';
-}
-
-// Common function to get form data
-function getFormData() {
-    const tickers = getSelectedTickers();
-    const startDate = document.getElementById('startDate')?.value;
-    const endDate = document.getElementById('endDate')?.value;
-    const riskFreeRate = parseFloat(document.getElementById('riskFreeRate')?.value || 0.005) / 100;
-    
-    if (tickers.length === 0 || !startDate || !endDate) {
-        alert('Required parameters are missing');
-        return null;
-    }
-    
-    const data = {
-        tickers: tickers,
-        start_date: startDate,
-        end_date: endDate,
-        risk_free_rate: riskFreeRate,
-        simulation_count: parseInt(document.getElementById('simulationCount').value)
-    };
-    
-    // When target return is enabled
-    const enableTargetReturnCheckbox = document.getElementById('enableTargetReturn');
-    const targetReturnInput = document.getElementById('targetReturn');
-    
-    if (enableTargetReturnCheckbox && enableTargetReturnCheckbox.checked && targetReturnInput) {
-        data.target_return = parseFloat(targetReturnInput.value); // Already in decimal format
-    }
-    
-    return data;
 }

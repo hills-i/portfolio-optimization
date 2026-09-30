@@ -246,7 +246,7 @@ async function handleFormSubmit(event) {
     placeholderArea.classList.remove('d-flex');
     placeholderArea.style.display = 'none';
     
-    const formData = getFormData();
+    const formData = getPortfolioFormData();
     await performAnalysis(formData);
 }
 
@@ -325,8 +325,9 @@ function getSelectedTickers() {
     return getTickers();
 }
 
-// Get form data
-function getFormData() {
+// Get form data. Percentage sliders are converted to decimal values when
+// their hidden inputs are updated, so values must not be divided again here.
+function getPortfolioFormData() {
     const data = {
         tickers: getTickers(),
         start_date: document.getElementById('startDate').value,
@@ -439,6 +440,9 @@ function showWarnings(warnings) {
 // Reset form
 function resetForm() {
     document.getElementById('portfolioForm').reset();
+    ['riskFreeRateRange', 'targetReturnRange', 'simulationCountRange'].forEach(id =>
+        document.getElementById(id).dispatchEvent(new Event('input')));
+    document.getElementById('enableTargetReturn').dispatchEvent(new Event('change'));
     
     // Clear ticker inputs
     document.getElementById('tickerInputs').innerHTML = '';
