@@ -271,6 +271,40 @@ python src/run.py
 ### Testing
 
 ```bash
+pip install pytest
+
+# Run all tests
+pytest tests/
+
+# Run a single file / a single test
+pytest tests/test_calculator.py
+pytest tests/test_calculator.py::TestClassName::test_method_name
+```
+
+#### Browser tests (JavaScript)
+
+`tests/test_frontend_e2e.py` drives the real UI in headless Chromium with [Playwright](https://playwright.dev/python/).
+Stock prices are generated locally, so no Yahoo Finance access is needed, but the page loads Bootstrap and Plotly from CDNs, so a network connection is required.
+These tests are skipped automatically when Playwright is not installed.
+
+```bash
+pip install pytest-playwright
+playwright install chromium      # on a fresh Linux machine: playwright install --with-deps chromium
+
+pytest tests/test_frontend_e2e.py
+pytest tests/test_frontend_e2e.py --headed   # watch the browser
+```
+
+#### Coverage (Python)
+
+```bash
+pip install pytest-cov
+pytest tests/ --cov=src/app --cov-report=term-missing
+```
+
+#### Manual API checks
+
+```bash
 # Run basic health check
 curl http://localhost:5000/api/health
 
