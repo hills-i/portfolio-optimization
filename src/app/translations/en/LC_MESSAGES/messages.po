@@ -525,3 +525,18 @@ msgstr "Maximum Sharpe ratio optimization failed or was undefined"
 
 msgid "Target return optimization failed or was infeasible"
 msgstr "Target return optimization failed or was infeasible"
+
+msgid "Fixed Weights"
+msgstr "Fixed Weights"
+
+msgid "Enter weights to plot their risk and return on the efficient frontier chart."
+msgstr "Enter weights to plot their risk and return on the efficient frontier chart."
+
+msgid "Total"
+msgstr "Total"
+
+msgid "Plot"
+msgstr "Plot"
+
+msgid "Clear"
+msgstr "Clear"

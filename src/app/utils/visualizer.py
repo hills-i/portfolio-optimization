@@ -27,7 +27,8 @@ class PortfolioVisualizer:
     def create_efficient_frontier_plot(self, 
                                      monte_carlo_data: List[Dict],
                                      efficient_frontier_data: List[Dict],
-                                     optimal_portfolios: Optional[Dict] = None) -> str:
+                                     optimal_portfolios: Optional[Dict] = None,
+                                     custom_portfolio: Optional[Dict] = None) -> str:
         """
         Create an efficient frontier plot.
         
@@ -35,6 +36,7 @@ class PortfolioVisualizer:
             monte_carlo_data: Random portfolio allocation sample results.
             efficient_frontier_data: Efficient frontier data.
             optimal_portfolios: Optimal portfolios.
+            custom_portfolio: User-specified fixed-weight portfolio (optional).
             
         Returns:
             str: Plotly chart JSON string.
@@ -104,6 +106,8 @@ class PortfolioVisualizer:
                                  '<b>' + _('Return') + ':</b> %{y:.3f}<br>' +
                                  f'<b>' + _('Sharpe Ratio') + ':</b> {portfolio["metrics"]["sharpe_ratio"]:.3f}<extra></extra>'
                 ))
+
+        self._add_custom_portfolio_trace(fig, custom_portfolio)
         
         # Layout configuration
         fig.update_layout(
@@ -124,6 +128,40 @@ class PortfolioVisualizer:
         
         return fig.to_json()
     
+    def _add_custom_portfolio_trace(self, fig: go.Figure, custom_portfolio: Optional[Dict]) -> None:
+        """Add a marker for the user-specified fixed-weight portfolio."""
+        if not custom_portfolio:
+            return
+
+        name = _('Fixed Weights')
+        metrics = custom_portfolio['metrics']
+
+        hover_text = f"<b>{name}</b><br>"
+        hover_text += f"{_('Risk')}: {metrics['risk']:.4f}<br>"
+        hover_text += f"{_('Return')}: {metrics['expected_return']:.4f}<br>"
+        hover_text += f"{_('Sharpe Ratio')}: {metrics['sharpe_ratio']:.3f}<br>"
+        hover_text += f"<br><b>{_('Asset Allocation')}:</b><br>"
+
+        sorted_weights = sorted(custom_portfolio['weights'].items(), key=lambda x: x[1], reverse=True)
+        for asset_name, weight in sorted_weights:
+            if weight > 0.001:  # Show only allocations above 0.1%.
+                hover_text += f"{asset_name}: {weight*100:.1f}%<br>"
+
+        fig.add_trace(go.Scatter(
+            x=[metrics['risk']],
+            y=[metrics['expected_return']],
+            mode='markers',
+            marker=dict(
+                symbol='x',
+                size=14,
+                color=self.COLORS['dark'],
+                line=dict(width=1, color='white')
+            ),
+            name=name,
+            text=[hover_text],
+            hovertemplate='%{text}<extra></extra>'
+        ))
+
     def create_asset_allocation_plot(self, weights: Dict[str, float], title: str = None) -> str:
         """
         Create a pie chart for asset allocation.
@@ -386,7 +424,8 @@ class PortfolioVisualizer:
             charts['efficient_frontier'] = self.create_efficient_frontier_plot(
                 random_portfolios['simulations'],
                 analysis_results['efficient_frontier'],
-                analysis_results.get('optimal_portfolios')
+                analysis_results.get('optimal_portfolios'),
+                analysis_results.get('custom_portfolio')
             )
 
         # Efficient frontier from mathematical optimization
@@ -395,7 +434,8 @@ class PortfolioVisualizer:
             charts['mathematical_efficient_frontier'] = self.create_working_efficient_frontier_plot(
                 analysis_results['efficient_frontier'],
                 analysis_results['asset_statistics'],
-                analysis_results.get('optimal_portfolios')
+                analysis_results.get('optimal_portfolios'),
+                analysis_results.get('custom_portfolio')
             )
         
         # Asset allocation (all portfolio types)
@@ -471,7 +511,8 @@ class PortfolioVisualizer:
     def create_working_efficient_frontier_plot(self,
                                               efficient_frontier_data: List[Dict],
                                               asset_statistics: Dict[str, Dict[str, float]],
-                                              optimal_portfolios: Optional[Dict] = None) -> str:
+                                              optimal_portfolios: Optional[Dict] = None,
+                                              custom_portfolio: Optional[Dict] = None) -> str:
         """
         Create an efficient frontier plot with lines and interactive detail.
 
@@ -479,6 +520,7 @@ class PortfolioVisualizer:
             efficient_frontier_data: Efficient frontier data.
             asset_statistics: Statistics for individual assets.
             optimal_portfolios: Optimal portfolios (optional).
+            custom_portfolio: User-specified fixed-weight portfolio (optional).
 
         Returns:
             str: Plotly chart JSON string.
@@ -645,6 +687,8 @@ class PortfolioVisualizer:
                         text=[hover_text],
                         hovertemplate='%{text}<extra></extra>'
                     ))
+
+        self._add_custom_portfolio_trace(fig, custom_portfolio)
 
         fig.update_layout(
             title=_('Mathematical Efficient Frontier'),

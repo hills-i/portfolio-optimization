@@ -528,3 +528,18 @@ msgstr "最大シャープレシオの最適化に失敗したか、定義でき
 
 msgid "Target return optimization failed or was infeasible"
 msgstr "目標リターンの最適化に失敗したか、実現できませんでした"
+
+msgid "Fixed Weights"
+msgstr "固定比率"
+
+msgid "Enter weights to plot their risk and return on the efficient frontier chart."
+msgstr "配分比率を入力すると、そのリスクとリターンを効率的フロンティアの図に表示します。"
+
+msgid "Total"
+msgstr "合計"
+
+msgid "Plot"
+msgstr "プロット"
+
+msgid "Clear"
+msgstr "クリア"

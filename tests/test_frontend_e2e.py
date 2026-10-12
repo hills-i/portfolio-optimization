@@ -224,3 +224,59 @@ class TestSuccessfulAnalysis:
             exported = json.load(f)
         assert exported
         assert page.js_errors == []
+
+
+def frontier_trace_names(page):
+    return page.evaluate("document.getElementById('frontierChart').data.map(t => t.name)")
+
+
+class TestFixedWeights:
+
+    def test_inputs_default_to_equal_weights(self, analyzed_page):
+        page = analyzed_page
+        inputs = page.locator('#fixedWeightsInputs .fixed-weight-input')
+
+        # Six default tickers: 16.7% x 5 and the 16.5% remainder on the last asset
+        assert inputs.count() == 6
+        assert inputs.last.input_value() == '16.5'
+        assert page.text_content('#fixedWeightsTotal') == '100.0'
+        assert page.is_enabled('#plotFixedWeightsBtn')
+
+        inputs.first.fill('50')
+
+        assert page.text_content('#fixedWeightsTotal') != '100.0'
+        assert page.is_disabled('#plotFixedWeightsBtn')
+        assert page.js_errors == []
+
+    def test_total_off_by_rounding_step_is_rejected(self, analyzed_page):
+        page = analyzed_page
+        inputs = page.locator('#fixedWeightsInputs .fixed-weight-input')
+
+        # 50 + 49.9 sums to 99.9; the server rejects it, so the button must stay disabled
+        for i, value in enumerate(['50', '49.9', '0', '0', '0', '0']):
+            inputs.nth(i).fill(value)
+
+        assert page.text_content('#fixedWeightsTotal') == '99.9'
+        assert page.is_disabled('#plotFixedWeightsBtn')
+        assert page.js_errors == []
+
+    def test_plot_and_clear_marker(self, analyzed_page):
+        page = analyzed_page
+        inputs = page.locator('#fixedWeightsInputs .fixed-weight-input')
+        for i, value in enumerate(['40', '20', '10', '10', '10', '10']):
+            inputs.nth(i).fill(value)
+
+        page.click('#plotFixedWeightsBtn')
+        page.wait_for_selector('#fixedWeightsMetrics strong')
+        page.wait_for_function(
+            "document.getElementById('frontierChart').data.some(t => t.name === 'Fixed Weights')"
+        )
+        assert 'Expected Return' in page.text_content('#fixedWeightsMetrics')
+
+        page.click('#clearFixedWeightsBtn')
+        page.wait_for_function(
+            "!document.getElementById('frontierChart').data.some(t => t.name === 'Fixed Weights')"
+        )
+        assert 'Fixed Weights' not in frontier_trace_names(page)
+        assert page.text_content('#fixedWeightsMetrics') == ''
+        assert page.js_errors == []

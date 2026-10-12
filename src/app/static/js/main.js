@@ -410,7 +410,10 @@ async function displayResults(results) {
     
     // Generate and display charts
     await generateCharts(results);
-    
+
+    // Reset fixed weights inputs for the analyzed assets
+    setupFixedWeightsForm(results);
+
     // Update data tables
     updateDataTables(results);
     

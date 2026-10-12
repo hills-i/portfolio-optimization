@@ -101,7 +101,25 @@ class PortfolioCalculator:
         except Exception as e:
             logger.error(f"Error loading portfolio data: {str(e)}")
             return False
-    
+
+    def load_statistics(self, mean_returns: pd.Series, cov_matrix: pd.DataFrame,
+                        risk_free_rate: float = 0.0) -> None:
+        """
+        Load precomputed annualized statistics instead of price data.
+
+        Only calculate_portfolio_metrics() is supported afterwards; methods
+        that need the return history (e.g. risk_decomposition) are not.
+
+        Args:
+            mean_returns: Annualized expected returns indexed by asset.
+            cov_matrix: Annualized covariance matrix with matching labels.
+            risk_free_rate: Annual risk-free rate.
+        """
+        self.returns = None
+        self.mean_returns = mean_returns
+        self.cov_matrix = cov_matrix.loc[mean_returns.index, mean_returns.index]
+        self.risk_free_rate = risk_free_rate
+
     def calculate_portfolio_metrics(self, weights: np.ndarray) -> Dict[str, float]:
         """
         Calculate basic portfolio metrics.

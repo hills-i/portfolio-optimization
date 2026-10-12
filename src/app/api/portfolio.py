@@ -8,6 +8,7 @@ from app.utils.visualizer import PortfolioVisualizer
 import logging
 import traceback
 import numpy as np
+import pandas as pd
 from datetime import datetime
 from contextlib import contextmanager
 
@@ -196,7 +197,12 @@ def analyze_portfolio():
         # Correlation matrix
         correlation_matrix = calculator.calculate_correlation_matrix()
         results['correlation_matrix'] = correlation_matrix.to_dict()
-        
+
+        # Annualized covariance matrix and risk-free rate, used to evaluate
+        # user-specified fixed weights without re-fetching data
+        results['covariance_matrix'] = calculator.cov_matrix.to_dict()
+        results['risk_free_rate'] = risk_free_rate
+
         # Random portfolio allocation samples
         try:
             logger.info(f"Running random portfolio simulation with {simulation_count} samples")
@@ -298,6 +304,89 @@ def analyze_portfolio():
         return jsonify({
             'error': 'An error occurred during portfolio analysis',
         }), 500
+
+WEIGHT_SUM_TOLERANCE = 1e-3
+
+
+def _parse_finite_float(value):
+    """Return value as a finite float, or None if it is not a finite number."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    value = float(value)
+    return value if np.isfinite(value) else None
+
+
+@bp.route('/evaluate-portfolio', methods=['POST'])
+def evaluate_portfolio():
+    """Evaluate fixed user-specified weights using statistics from /analyze"""
+    try:
+        data = request.get_json(silent=True)
+
+        if not isinstance(data, dict):
+            return jsonify({'error': 'Evaluation data is required'}), 400
+
+        weights = data.get('weights')
+        expected_returns = data.get('expected_returns')
+        covariance_matrix = data.get('covariance_matrix')
+
+        if not all(isinstance(x, dict) for x in (weights, expected_returns, covariance_matrix)):
+            return jsonify({
+                'error': 'weights, expected_returns and covariance_matrix must be objects'
+            }), 400
+
+        assets = list(weights.keys())
+        asset_set = set(assets)
+        min_assets = current_app.config.get('MIN_ASSETS', 2)
+        max_assets = current_app.config.get('MAX_ASSETS', 20)
+        if not min_assets <= len(assets) <= max_assets:
+            return jsonify({
+                'error': f'Number of assets must be between {min_assets} and {max_assets}'
+            }), 400
+
+        if (set(expected_returns.keys()) != asset_set or
+                set(covariance_matrix.keys()) != asset_set or
+                any(not isinstance(row, dict) or set(row.keys()) != asset_set
+                    for row in covariance_matrix.values())):
+            return jsonify({'error': 'Assets in weights and statistics do not match'}), 400
+
+        weight_values = [_parse_finite_float(weights[a]) for a in assets]
+        mean_values = [_parse_finite_float(expected_returns[a]) for a in assets]
+        cov_values = [[_parse_finite_float(covariance_matrix[a][b]) for b in assets] for a in assets]
+        risk_free_rate = _parse_finite_float(data.get('risk_free_rate', 0.0))
+
+        if (any(v is None for v in weight_values + mean_values) or
+                any(v is None for row in cov_values for v in row) or
+                risk_free_rate is None):
+            return jsonify({'error': 'All values must be finite numbers'}), 400
+
+        if any(w < 0 or w > 1 for w in weight_values):
+            return jsonify({'error': 'Each weight must be between 0 and 1'}), 400
+
+        if abs(sum(weight_values) - 1.0) > WEIGHT_SUM_TOLERANCE:
+            return jsonify({'error': 'Weights must sum to 1'}), 400
+
+        weights_array = np.array(weight_values)
+        weights_array = weights_array / weights_array.sum()
+
+        calculator = PortfolioCalculator()
+        calculator.load_statistics(
+            pd.Series(mean_values, index=assets),
+            pd.DataFrame(cov_values, index=assets, columns=assets),
+            risk_free_rate
+        )
+        metrics = calculator.calculate_portfolio_metrics(weights_array)
+
+        return jsonify({
+            'success': True,
+            'custom_portfolio': {
+                'weights': dict(zip(assets, weights_array.tolist())),
+                'metrics': metrics
+            }
+        })
+
+    except Exception:
+        logger.exception("Portfolio evaluation error")
+        return jsonify({'error': 'An error occurred during portfolio evaluation'}), 500
 
 @bp.route('/compare-simulations', methods=['POST'])
 def compare_simulation_counts():
@@ -423,7 +512,8 @@ def create_visualizations():
                             charts[chart_type] = visualizer.create_efficient_frontier_plot(
                                 random_portfolios['simulations'],
                                 analysis_results['efficient_frontier'],
-                                analysis_results.get('optimal_portfolios')
+                                analysis_results.get('optimal_portfolios'),
+                                analysis_results.get('custom_portfolio')
                             )
 
                     elif chart_type == 'mathematical_efficient_frontier':
@@ -433,7 +523,8 @@ def create_visualizations():
                             charts[chart_type] = visualizer.create_working_efficient_frontier_plot(
                                 analysis_results['efficient_frontier'],
                                 analysis_results['asset_statistics'],
-                                analysis_results.get('optimal_portfolios')
+                                analysis_results.get('optimal_portfolios'),
+                                analysis_results.get('custom_portfolio')
                             )
                     
                     elif chart_type == 'asset_allocation':

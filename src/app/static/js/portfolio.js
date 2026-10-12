@@ -445,6 +445,151 @@ function showPortfolioDetails(portfolioType) {
     // TODO: Implement details modal
 }
 
+// Fixed weights portfolio
+// Half of the 0.1% input step: accept only totals that display as exactly 100.0%.
+// This keeps the client check strictly within the server's 0.1% tolerance.
+const FIXED_WEIGHTS_TOLERANCE_PERCENT = 0.05;
+
+// Build weight inputs for the analyzed assets, initialized to equal weights
+function setupFixedWeightsForm(results) {
+    const card = document.getElementById('fixedWeightsCard');
+    const container = document.getElementById('fixedWeightsInputs');
+    const assets = Object.keys(results.asset_statistics || {});
+
+    document.getElementById('fixedWeightsMetrics').replaceChildren();
+    card.classList.toggle('d-none', !results.covariance_matrix || assets.length === 0);
+
+    // Round to 0.1% and give the remainder to the last asset so the total is exactly 100%
+    const equalWeight = Math.round(1000 / assets.length) / 10;
+    const lastWeight = (100 - equalWeight * (assets.length - 1)).toFixed(1);
+
+    container.replaceChildren(...assets.map((asset, i) => {
+        const col = document.createElement('div');
+        col.className = 'col-6 col-md-4 col-lg-3';
+
+        const group = document.createElement('div');
+        group.className = 'input-group input-group-sm';
+
+        const label = document.createElement('span');
+        label.className = 'input-group-text';
+        label.textContent = asset;
+
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'form-control fixed-weight-input';
+        input.min = '0';
+        input.max = '100';
+        input.step = '0.1';
+        input.dataset.asset = asset;
+        input.value = i === assets.length - 1 ? lastWeight : equalWeight.toFixed(1);
+        input.addEventListener('input', updateFixedWeightsTotal);
+
+        const suffix = document.createElement('span');
+        suffix.className = 'input-group-text';
+        suffix.textContent = '%';
+
+        group.append(label, input, suffix);
+        col.append(group);
+        return col;
+    }));
+
+    updateFixedWeightsTotal();
+}
+
+// Read fixed weights as percentages keyed by asset
+function getFixedWeightsPercent() {
+    const weights = {};
+    document.querySelectorAll('#fixedWeightsInputs .fixed-weight-input').forEach(input => {
+        weights[input.dataset.asset] = parseFloat(input.value);
+    });
+    return weights;
+}
+
+// Show the total and enable plotting only when weights are valid and sum to 100%
+function updateFixedWeightsTotal() {
+    const values = Object.values(getFixedWeightsPercent());
+    const total = values.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
+    const valid = values.length > 0 &&
+        values.every(value => Number.isFinite(value) && value >= 0 && value <= 100) &&
+        Math.abs(total - 100) < FIXED_WEIGHTS_TOLERANCE_PERCENT;
+
+    const totalElement = document.getElementById('fixedWeightsTotal');
+    totalElement.textContent = total.toFixed(1);
+    totalElement.classList.toggle('text-danger', !valid);
+    document.getElementById('plotFixedWeightsBtn').disabled = !valid;
+}
+
+// Evaluate the fixed weights and add them to the efficient frontier charts
+async function plotFixedWeights() {
+    if (!currentResults || !currentResults.covariance_matrix) {
+        return;
+    }
+
+    const weights = Object.fromEntries(
+        Object.entries(getFixedWeightsPercent()).map(([asset, value]) => [asset, value / 100])
+    );
+    const expectedReturns = Object.fromEntries(
+        Object.entries(currentResults.asset_statistics).map(([asset, stats]) => [asset, stats.expected_return])
+    );
+
+    try {
+        const response = await fetch('/api/evaluate-portfolio', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                weights: weights,
+                expected_returns: expectedReturns,
+                covariance_matrix: currentResults.covariance_matrix,
+                risk_free_rate: currentResults.risk_free_rate
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.error || 'Portfolio evaluation failed');
+        }
+
+        currentResults.custom_portfolio = result.custom_portfolio;
+        await generateCharts(currentResults);
+        displayFixedWeightsMetrics(result.custom_portfolio.metrics);
+    } catch (error) {
+        console.error('Fixed weights evaluation error:', error);
+        showError(error.message);
+    }
+}
+
+// Remove the fixed weights portfolio from the charts
+async function clearFixedWeights() {
+    if (!currentResults || !currentResults.custom_portfolio) {
+        return;
+    }
+
+    delete currentResults.custom_portfolio;
+    document.getElementById('fixedWeightsMetrics').replaceChildren();
+    await generateCharts(currentResults);
+}
+
+function displayFixedWeightsMetrics(metrics) {
+    const items = [
+        [_('Expected Return'), formatPercent(metrics.expected_return)],
+        [_('Risk'), formatPercent(metrics.risk)],
+        [_('Sharpe Ratio'), formatNumber(metrics.sharpe_ratio, 3)],
+        [_('Annual VaR (95%)'), formatPercent(metrics.var_95)]
+    ];
+
+    document.getElementById('fixedWeightsMetrics').replaceChildren(...items.map(([label, value]) => {
+        const item = document.createElement('span');
+        item.className = 'me-3';
+        const strong = document.createElement('strong');
+        strong.textContent = `${label}: `;
+        item.append(strong, value);
+        return item;
+    }));
+}
+
 // Redraw charts (on window resize)
 function redrawCharts() {
     const chartIds = ['frontierChart', 'allocationChartMaxSharpe', 'allocationChartMinVariance',

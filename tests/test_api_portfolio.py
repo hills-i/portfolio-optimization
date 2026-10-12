@@ -237,6 +237,8 @@ class TestAnalyzePortfolioEndpoint:
         assert detailed_analysis['confidence_intervals'] == detailed_analysis['allocation_distribution_intervals']
         assert 'asset_statistics' in data
         assert 'correlation_matrix' in data
+        assert set(data['covariance_matrix'].keys()) == {'AAPL', 'GOOGL'}
+        assert data['risk_free_rate'] == 0.01
         assert data['risk_metric_metadata']['var'] == {
             'method': 'parametric_lognormal',
             'horizon': 'annual',
@@ -359,6 +361,82 @@ class TestAnalyzePortfolioEndpoint:
             'language': 'ja'
         })
         assert resp.status_code == 200
+
+
+# ──────────────────────────────────────────────
+# POST /api/evaluate-portfolio
+# ──────────────────────────────────────────────
+class TestEvaluatePortfolioEndpoint:
+
+    @staticmethod
+    def _payload(loaded_calculator, weights=None):
+        return {
+            'weights': weights or {'AAPL': 0.5, 'GOOGL': 0.3, 'MSFT': 0.2},
+            'expected_returns': loaded_calculator.mean_returns.to_dict(),
+            'covariance_matrix': loaded_calculator.cov_matrix.to_dict(),
+            'risk_free_rate': loaded_calculator.risk_free_rate
+        }
+
+    def test_success_matches_calculator(self, client, loaded_calculator):
+        resp = client.post('/api/evaluate-portfolio', json=self._payload(loaded_calculator))
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data['success'] is True
+
+        custom = data['custom_portfolio']
+        assert custom['weights'] == pytest.approx({'AAPL': 0.5, 'GOOGL': 0.3, 'MSFT': 0.2})
+        expected = loaded_calculator.calculate_portfolio_metrics(np.array([0.5, 0.3, 0.2]))
+        for key, value in expected.items():
+            assert custom['metrics'][key] == pytest.approx(value)
+
+    def test_weights_within_tolerance_are_normalized(self, client, loaded_calculator):
+        payload = self._payload(loaded_calculator, {'AAPL': 0.333, 'GOOGL': 0.333, 'MSFT': 0.333})
+        resp = client.post('/api/evaluate-portfolio', json=payload)
+        assert resp.status_code == 200
+        weights = resp.get_json()['custom_portfolio']['weights']
+        assert sum(weights.values()) == pytest.approx(1.0)
+
+    @pytest.mark.parametrize('weights', [
+        {'AAPL': 0.5, 'GOOGL': 0.3, 'MSFT': 0.1},     # sum != 1
+        {'AAPL': 1.2, 'GOOGL': -0.1, 'MSFT': -0.1},   # negative / above 1
+        {'AAPL': 0.5, 'GOOGL': 0.5},                   # asset mismatch
+        {'AAPL': '0.5', 'GOOGL': 0.3, 'MSFT': 0.2},   # non-numeric
+        {'AAPL': None, 'GOOGL': 0.5, 'MSFT': 0.5},    # null
+        {'AAPL': True, 'GOOGL': 0.0, 'MSFT': 0.0},    # boolean
+    ])
+    def test_invalid_weights_return_400(self, client, loaded_calculator, weights):
+        resp = client.post('/api/evaluate-portfolio', json=self._payload(loaded_calculator, weights))
+        assert resp.status_code == 400
+        assert 'error' in resp.get_json()
+
+    def test_too_few_assets_return_400(self, client):
+        resp = client.post('/api/evaluate-portfolio', json={
+            'weights': {'AAPL': 1.0},
+            'expected_returns': {'AAPL': 0.1},
+            'covariance_matrix': {'AAPL': {'AAPL': 0.04}},
+            'risk_free_rate': 0.01
+        })
+        assert resp.status_code == 400
+
+    def test_covariance_row_mismatch_returns_400(self, client, loaded_calculator):
+        payload = self._payload(loaded_calculator)
+        del payload['covariance_matrix']['AAPL']['MSFT']
+        resp = client.post('/api/evaluate-portfolio', json=payload)
+        assert resp.status_code == 400
+
+    def test_invalid_risk_free_rate_returns_400(self, client, loaded_calculator):
+        payload = self._payload(loaded_calculator)
+        payload['risk_free_rate'] = 'abc'
+        resp = client.post('/api/evaluate-portfolio', json=payload)
+        assert resp.status_code == 400
+
+    @pytest.mark.parametrize('body', [None, [], {}])
+    def test_missing_body_returns_400(self, client, body):
+        if body is None:
+            resp = client.post('/api/evaluate-portfolio', data='', content_type='application/json')
+        else:
+            resp = client.post('/api/evaluate-portfolio', json=body)
+        assert resp.status_code == 400
 
 
 # ──────────────────────────────────────────────

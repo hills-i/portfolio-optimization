@@ -156,6 +156,40 @@ class TestCalculatePortfolioMetrics:
 
 
 # ==========================================================
+# load_statistics
+# ==========================================================
+class TestLoadStatistics:
+
+    def test_metrics_match_load_data(self, app_context, loaded_calculator):
+        from app.utils.calculator import PortfolioCalculator
+        calc = PortfolioCalculator()
+        calc.load_statistics(
+            loaded_calculator.mean_returns,
+            loaded_calculator.cov_matrix,
+            loaded_calculator.risk_free_rate
+        )
+        weights = np.array([0.5, 0.3, 0.2])
+
+        expected = loaded_calculator.calculate_portfolio_metrics(weights)
+        actual = calc.calculate_portfolio_metrics(weights)
+
+        for key, value in expected.items():
+            assert actual[key] == pytest.approx(value)
+
+    def test_covariance_reordered_to_mean_returns(self, app_context, loaded_calculator):
+        from app.utils.calculator import PortfolioCalculator
+        calc = PortfolioCalculator()
+        reversed_assets = loaded_calculator.cov_matrix.index[::-1]
+        calc.load_statistics(
+            loaded_calculator.mean_returns,
+            loaded_calculator.cov_matrix.loc[reversed_assets, reversed_assets]
+        )
+
+        assert list(calc.cov_matrix.index) == list(loaded_calculator.mean_returns.index)
+        assert list(calc.cov_matrix.columns) == list(loaded_calculator.mean_returns.index)
+
+
+# ==========================================================
 # random_portfolio_simulation / monte_carlo_simulation compatibility alias
 # ==========================================================
 class TestRandomPortfolioSimulation:

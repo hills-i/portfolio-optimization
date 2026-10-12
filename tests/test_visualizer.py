@@ -204,3 +204,68 @@ class TestCreateWorkingEfficientFrontierPlot:
         result = vis.create_working_efficient_frontier_plot([], {})
         parsed = json.loads(result)
         assert 'data' in parsed
+
+
+class TestCustomPortfolioTrace:
+
+    @staticmethod
+    def _custom_portfolio(calc):
+        weights = np.array([0.5, 0.3, 0.2])
+        return {
+            'weights': dict(zip(calc.mean_returns.index, weights)),
+            'metrics': calc.calculate_portfolio_metrics(weights)
+        }
+
+    @staticmethod
+    def _trace_names(chart_json):
+        return [trace.get('name') for trace in json.loads(chart_json)['data']]
+
+    def test_efficient_frontier_plot_adds_marker(self, app_context, loaded_calculator, sample_mc_results):
+        from app.utils.visualizer import PortfolioVisualizer
+        vis = PortfolioVisualizer()
+        ef_data = loaded_calculator.calculate_efficient_frontier(20).to_dict('records')
+        custom = self._custom_portfolio(loaded_calculator)
+
+        result = vis.create_efficient_frontier_plot(
+            sample_mc_results.to_dict('records'), ef_data, None, custom
+        )
+
+        traces = [t for t in json.loads(result)['data'] if t.get('name') == 'Fixed Weights']
+        assert len(traces) == 1
+        assert traces[0]['x'] == [pytest.approx(custom['metrics']['risk'])]
+        assert traces[0]['y'] == [pytest.approx(custom['metrics']['expected_return'])]
+
+    def test_working_efficient_frontier_plot_adds_marker(self, app_context, loaded_calculator):
+        from app.utils.visualizer import PortfolioVisualizer
+        vis = PortfolioVisualizer()
+        ef_data = loaded_calculator.calculate_efficient_frontier(20).to_dict('records')
+        stats = loaded_calculator.calculate_asset_statistics()
+
+        result = vis.create_working_efficient_frontier_plot(
+            ef_data, stats, None, self._custom_portfolio(loaded_calculator)
+        )
+
+        assert self._trace_names(result).count('Fixed Weights') == 1
+
+    def test_no_marker_without_custom_portfolio(self, app_context, sample_analysis_results):
+        from app.utils.visualizer import PortfolioVisualizer
+        vis = PortfolioVisualizer()
+
+        charts = vis.create_summary_dashboard(sample_analysis_results)
+
+        assert 'Fixed Weights' not in self._trace_names(charts['efficient_frontier'])
+        assert 'Fixed Weights' not in self._trace_names(charts['mathematical_efficient_frontier'])
+
+    def test_summary_dashboard_passes_custom_portfolio(self, app_context, loaded_calculator,
+                                                      sample_analysis_results):
+        from app.utils.visualizer import PortfolioVisualizer
+        vis = PortfolioVisualizer()
+        results = {
+            **sample_analysis_results,
+            'custom_portfolio': self._custom_portfolio(loaded_calculator)
+        }
+
+        charts = vis.create_summary_dashboard(results)
+
+        assert 'Fixed Weights' in self._trace_names(charts['efficient_frontier'])
+        assert 'Fixed Weights' in self._trace_names(charts['mathematical_efficient_frontier'])
