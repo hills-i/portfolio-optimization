@@ -1,5 +1,5 @@
 from flask import request, jsonify, current_app, session
-from flask_babel import force_locale
+from flask_babel import force_locale, gettext as _
 from app.api import bp
 from app.utils.validator import InputValidator
 from app.utils.data_fetcher import DataFetcher
@@ -32,7 +32,7 @@ def create_validation_config():
         MIN_ASSETS = current_app.config.get('MIN_ASSETS', 2)
         MAX_ASSETS = current_app.config.get('MAX_ASSETS', 20)
         MIN_ANALYSIS_YEARS = current_app.config.get('MIN_ANALYSIS_YEARS', 1)
-        MAX_ANALYSIS_YEARS = current_app.config.get('MAX_ANALYSIS_YEARS', 10)
+        MAX_ANALYSIS_YEARS = current_app.config.get('MAX_ANALYSIS_YEARS', 31)
         MIN_RISK_FREE_RATE = current_app.config.get('MIN_RISK_FREE_RATE', -0.05)
         MAX_RISK_FREE_RATE = current_app.config.get('MAX_RISK_FREE_RATE', 0.20)
         MIN_SIMULATION_COUNT = current_app.config.get('MIN_SIMULATION_COUNT', 1000)
@@ -130,7 +130,7 @@ def analyze_portfolio():
         target_return = data.get('target_return')  # Optional
         
         try:
-            risk_free_rate = float(data.get('risk_free_rate', current_app.config.get('DEFAULT_RISK_FREE_RATE', 0.005)))
+            risk_free_rate = float(data.get('risk_free_rate', current_app.config.get('DEFAULT_RISK_FREE_RATE', 0.01)))
             simulation_count = int(data.get('simulation_count', current_app.config.get('DEFAULT_SIMULATION_COUNT', 10000)))
         except (TypeError, ValueError):
             return jsonify({'error': 'Invalid parameter types for risk_free_rate or simulation_count'}), 400
@@ -180,7 +180,7 @@ def analyze_portfolio():
             'optimization_errors': {},
             'risk_metric_metadata': {
                 'var': {
-                    'method': 'parametric_normal',
+                    'method': 'parametric_lognormal',
                     'horizon': 'annual',
                     'unit': 'return_rate',
                     'confidence_levels': [0.95, 0.99],
@@ -235,6 +235,15 @@ def analyze_portfolio():
             weights_array = np.array(list(max_sharpe_result['weights'].values()))
             risk_decomp = calculator.risk_decomposition(weights_array)
             results['optimal_portfolios']['max_sharpe']['risk_decomposition'] = risk_decomp
+        else:
+            results['optimization_errors']['max_sharpe'] = {
+                'optimization_type': max_sharpe_result.get('optimization_type'),
+                'optimizer_success': max_sharpe_result.get('optimizer_success'),
+                'optimizer_message': max_sharpe_result.get('optimizer_message')
+            }
+            results['warnings'].append(
+                _('Maximum Sharpe ratio optimization failed or was undefined')
+            )
         
         # 2. Minimum risk portfolio with target return
         if target_return is not None:
@@ -256,19 +265,11 @@ def analyze_portfolio():
                     'optimizer_message': min_risk_result.get('optimizer_message')
                 }
                 results['warnings'].append(
-                    'Target return optimization failed or was infeasible'
+                    _('Target return optimization failed or was infeasible')
                 )
         
-        # 3. Minimum variance portfolio (pure minimum variance without constraints)
-        # Minimize variance without target return constraint
-        try:
-            # First try constraint-free minimum variance portfolio
-            min_var_result = calculator.optimize_min_variance_portfolio()
-        except Exception as e:
-            # Fallback to traditional method
-            logger.warning(f"Using fallback min variance calculation: {e}")
-            min_expected_return = min(asset_stats[asset]['expected_return'] for asset in asset_stats)
-            min_var_result = calculator.optimize_portfolio(target_return=min_expected_return)
+        # 3. Minimum variance portfolio (no target return constraint)
+        min_var_result = calculator.optimize_min_variance_portfolio()
         if min_var_result['success']:
             results['optimal_portfolios']['min_variance'] = min_var_result
             
@@ -284,7 +285,7 @@ def analyze_portfolio():
             results['efficient_frontier'] = efficient_frontier.to_dict('records')
         except Exception as e:
             logger.warning(f"Efficient frontier calculation failed: {str(e)}")
-            results['warnings'].append('Failed to calculate efficient frontier')
+            results['warnings'].append(_('Failed to calculate efficient frontier'))
         
         logger.info("Portfolio analysis completed successfully")
 
@@ -328,7 +329,7 @@ def compare_simulation_counts():
         end_date = data.get('end_date')
         
         try:
-            risk_free_rate = float(data.get('risk_free_rate', current_app.config.get('DEFAULT_RISK_FREE_RATE', 0.005)))
+            risk_free_rate = float(data.get('risk_free_rate', current_app.config.get('DEFAULT_RISK_FREE_RATE', 0.01)))
         except (TypeError, ValueError):
             return jsonify({'error': 'Invalid parameter type for risk_free_rate'}), 400
         

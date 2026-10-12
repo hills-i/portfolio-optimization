@@ -43,6 +43,65 @@ class TestFetchStockData:
         assert len(result['metadata']['tickers_failed']) == 0
 
     @patch('app.utils.data_fetcher.yf.Ticker')
+    def test_fetch_aligns_exchanges_in_different_time_zones(self, mock_ticker_cls, request_context):
+        """Tokyo and New York prices must share calendar dates, not UTC timestamps."""
+        def side_effect(ticker):
+            hist = self._mock_history(ticker)
+            tz = 'Asia/Tokyo' if ticker.endswith('.T') else 'America/New_York'
+            hist.index = hist.index.tz_localize(tz)
+            m = MagicMock()
+            m.history.return_value = hist
+            return m
+
+        mock_ticker_cls.side_effect = side_effect
+        fetcher = self._make_fetcher()
+        result = fetcher.fetch_stock_data(['7203.T', 'AAPL'], '2023-01-01', '2023-12-31')
+
+        assert result['success'] is True
+        assert len(result['data']) == 100
+        assert result['data'].index.tz is None
+        returns = result['data'].pct_change().dropna()
+        assert (returns == 0).sum().sum() == 0
+        assert any('different time zones' in str(w) for w in result['warnings'])
+
+    @patch('app.utils.data_fetcher.yf.Ticker')
+    def test_fetch_warns_when_period_shortened_by_late_listing(self, mock_ticker_cls, request_context):
+        def side_effect(ticker):
+            hist = self._mock_history(ticker)
+            if ticker == 'NEW':
+                hist = hist.iloc[50:]
+            m = MagicMock()
+            m.history.return_value = hist
+            return m
+
+        mock_ticker_cls.side_effect = side_effect
+        fetcher = self._make_fetcher()
+        result = fetcher.fetch_stock_data(['AAPL', 'NEW'], '2023-01-01', '2023-12-31')
+
+        assert result['success'] is True
+        assert len(result['data']) == 50
+        assert any('shortened' in str(w) for w in result['warnings'])
+
+    @patch('app.utils.data_fetcher.yf.Ticker')
+    def test_fetch_excludes_constant_price_asset(self, mock_ticker_cls, request_context):
+        def side_effect(ticker):
+            hist = self._mock_history(ticker)
+            if ticker == 'FLAT':
+                hist['Close'] = 100.0
+            m = MagicMock()
+            m.history.return_value = hist
+            return m
+
+        mock_ticker_cls.side_effect = side_effect
+        fetcher = self._make_fetcher()
+        result = fetcher.fetch_stock_data(['AAPL', 'GOOGL', 'FLAT'], '2023-01-01', '2023-12-31')
+
+        assert result['success'] is True
+        assert 'FLAT' not in result['data'].columns
+        assert 'FLAT' in result['metadata']['tickers_failed']
+        assert any('No price variation' in str(w) for w in result['warnings'])
+
+    @patch('app.utils.data_fetcher.yf.Ticker')
     def test_fetch_with_progress_callback(self, mock_ticker_cls, request_context):
         def side_effect(ticker):
             m = MagicMock()
@@ -154,6 +213,22 @@ class TestHandleMissingData:
         result = fetcher._handle_missing_data(data)
 
         assert result.isna().sum().sum() == 0
+        # Dates missing for any asset are dropped rather than filled.
+        assert len(result) == 7
+
+    def test_late_listing_is_not_backfilled(self, request_context):
+        """Backfilling before a listing date would create fake zero returns."""
+        dates = pd.bdate_range(start='2024-01-02', periods=10)
+        data = pd.DataFrame({
+            'A': np.arange(100.0, 110.0),
+            'B': [np.nan] * 4 + list(np.arange(200.0, 206.0))
+        }, index=dates)
+
+        fetcher = self._make_fetcher()
+        result = fetcher._handle_missing_data(data)
+
+        assert result.index.min() == dates[4]
+        assert (result['B'].pct_change().dropna() != 0).all()
 
     def test_all_nan_column(self, request_context):
         dates = pd.bdate_range(start='2024-01-02', periods=5)
@@ -164,7 +239,7 @@ class TestHandleMissingData:
 
         fetcher = self._make_fetcher()
         result = fetcher._handle_missing_data(data)
-        # Even with bfill/ffill, an all-NaN column remains empty and dropna removes every row.
+        # An all-NaN column leaves no date common to every asset.
         assert len(result) == 0
 
 

@@ -491,3 +491,37 @@ msgstr "Optimal Portfolio Asset Allocation (Minimum Variance)"
 
 msgid "Optimal Portfolio Asset Allocation (Target Return Achievement)"
 msgstr "Optimal Portfolio Asset Allocation (Target Return Achievement)"
+
+#, python-format
+msgid "%s: No price variation in the analysis period"
+msgstr "%s: No price variation in the analysis period"
+
+#, python-format
+msgid "Insufficient overlapping data across assets (common trading days: %d)"
+msgstr "Insufficient overlapping data across assets (common trading days: %d)"
+
+#, python-format
+msgid "Analysis period was shortened to the date range common to all assets (%(start)s to %(end)s)"
+msgstr "Analysis period was shortened to the date range common to all assets (%(start)s to %(end)s)"
+
+msgid "Assets trade on exchanges in different time zones. Daily correlations may be underestimated, and returns are measured in each asset's local currency."
+msgstr "Assets trade on exchanges in different time zones. Daily correlations may be underestimated, and returns are measured in each asset's local currency."
+
+msgid "No asset has an expected return above the risk-free rate; the maximum Sharpe ratio portfolio is undefined"
+msgstr "No asset has an expected return above the risk-free rate; the maximum Sharpe ratio portfolio is undefined"
+
+msgid "Ticker symbols must be a list of strings"
+msgstr "Ticker symbols must be a list of strings"
+
+#, python-format
+msgid "%s must be a number"
+msgstr "%s must be a number"
+
+msgid "Warnings"
+msgstr "Warnings"
+
+msgid "Maximum Sharpe ratio optimization failed or was undefined"
+msgstr "Maximum Sharpe ratio optimization failed or was undefined"
+
+msgid "Target return optimization failed or was infeasible"
+msgstr "Target return optimization failed or was infeasible"

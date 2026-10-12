@@ -8,25 +8,56 @@ from flask_babel import gettext as _
 
 logger = logging.getLogger(__name__)
 
+# Fallback annualization factor when the observation frequency cannot be inferred.
+TRADING_DAYS_PER_YEAR = 252
+
 class PortfolioCalculator:
     """Portfolio calculation class."""
-    
+
     def __init__(self):
         self.returns = None
         self.mean_returns = None
         self.cov_matrix = None
         self.risk_free_rate = 0.0
+        self.periods_per_year = TRADING_DAYS_PER_YEAR
 
     @staticmethod
-    def calculate_annual_normal_downside_metrics(annual_mean: float, annual_std: float) -> Dict[str, float]:
+    def estimate_periods_per_year(returns: pd.DataFrame) -> float:
+        """
+        Estimate the number of return observations per year from the date index.
+
+        The observation frequency depends on the assets: about 252 for a single
+        stock market, fewer when markets with different holidays are combined
+        (only common trading days are kept), and about 365 for crypto assets.
+        """
+        index = returns.index
+        if isinstance(index, pd.DatetimeIndex) and len(index) > 1:
+            span_years = (index[-1] - index[0]).days / 365.25
+            if span_years > 0:
+                return (len(index) - 1) / span_years
+        return TRADING_DAYS_PER_YEAR
+
+    @staticmethod
+    def calculate_annual_lognormal_downside_metrics(annual_mean: float, annual_std: float) -> Dict[str, float]:
         """
         Calculate annual lower-tail return quantiles and positive-loss VaR.
+
+        The gross annual return (1 + R) is modeled as lognormal with the given
+        arithmetic mean and standard deviation, so a return quantile can never
+        fall below -100% (unlike a normal approximation with high volatility).
 
         VaR is reported as a nonnegative annual return-rate loss, not a
         currency amount.
         """
-        annual_return_p05 = annual_mean - abs(norm.ppf(0.05)) * annual_std
-        annual_return_p01 = annual_mean - abs(norm.ppf(0.01)) * annual_std
+        gross_mean = 1.0 + annual_mean
+        if gross_mean <= 0:
+            annual_return_p05 = annual_return_p01 = -1.0
+        else:
+            log_var = np.log1p((annual_std / gross_mean) ** 2)
+            log_mean = np.log(gross_mean) - log_var / 2
+            log_std = np.sqrt(log_var)
+            annual_return_p05 = float(np.expm1(log_mean + norm.ppf(0.05) * log_std))
+            annual_return_p01 = float(np.expm1(log_mean + norm.ppf(0.01) * log_std))
 
         return {
             'annual_return_p05': annual_return_p05,
@@ -50,15 +81,21 @@ class PortfolioCalculator:
             # Calculate daily returns.
             self.returns = price_data.pct_change().dropna()
             
-            # Calculate annualized expected returns (252 trading days).
-            self.mean_returns = self.returns.mean() * 252
-            
+            # Annualize with the observed frequency rather than a fixed 252 days.
+            self.periods_per_year = self.estimate_periods_per_year(self.returns)
+
+            # Calculate annualized expected returns.
+            self.mean_returns = self.returns.mean() * self.periods_per_year
+
             # Calculate the annualized covariance matrix.
-            self.cov_matrix = self.returns.cov() * 252
-            
+            self.cov_matrix = self.returns.cov() * self.periods_per_year
+
             self.risk_free_rate = risk_free_rate
-            
-            logger.info(f"Portfolio data loaded successfully: {len(self.returns.columns)} assets, {len(self.returns)} days")
+
+            logger.info(
+                f"Portfolio data loaded successfully: {len(self.returns.columns)} assets, "
+                f"{len(self.returns)} days, {self.periods_per_year:.1f} periods/year"
+            )
             return True
             
         except Exception as e:
@@ -91,9 +128,9 @@ class PortfolioCalculator:
             'risk': portfolio_risk,
             'sharpe_ratio': sharpe_ratio,
             'variance': portfolio_variance,
-            **self.calculate_annual_normal_downside_metrics(expected_return, portfolio_risk)
+            **self.calculate_annual_lognormal_downside_metrics(expected_return, portfolio_risk)
         }
-    
+
     def random_portfolio_simulation(self, num_simulations: int = 10000) -> pd.DataFrame:
         """
         Generate random-weight portfolio allocation samples.
@@ -114,9 +151,10 @@ class PortfolioCalculator:
         
         logger.info(f"Starting random portfolio simulation with {num_simulations} samples")
         
-        # Vectorized generation of all random weights.
-        weights_matrix = np.random.random((num_simulations, num_assets))
-        weights_matrix = weights_matrix / weights_matrix.sum(axis=1, keepdims=True)
+        # Vectorized generation of all random weights, uniform on the simplex.
+        # (Normalizing independent uniforms would over-concentrate samples near
+        # equal weights.)
+        weights_matrix = np.random.dirichlet(np.ones(num_assets), size=num_simulations)
         
         # Log the first five simulation weights for debugging.
         for i in range(min(5, num_simulations)):
@@ -158,78 +196,6 @@ class PortfolioCalculator:
         simulate future return paths.
         """
         return self.random_portfolio_simulation(num_simulations)
-    
-    def monte_carlo_simulation_returns(self, num_simulations: int = 10000, time_horizon: int = 252) -> pd.DataFrame:
-        """
-        Run a return-based Monte Carlo simulation for future returns.
-        
-        Args:
-            num_simulations: Number of simulations.
-            time_horizon: Forecast horizon in trading days (default: 1 year = 252).
-            
-        Returns:
-            pd.DataFrame: Simulation results.
-        """
-        if self.returns is None:
-            raise ValueError(_('Data not loaded. Call load_data() first.'))
-        
-        num_assets = len(self.mean_returns)
-        results = []
-        
-        logger.info(f"Starting return-based Monte Carlo simulation with {num_simulations} iterations")
-        
-        # Use a fixed optimal allocation for comparison purposes.
-        optimal_result = self.optimize_portfolio()
-        if optimal_result['success']:
-            optimal_weights = np.array(list(optimal_result['weights'].values()))
-        else:
-            # Fallback to equal weights.
-            optimal_weights = np.ones(num_assets) / num_assets
-            
-        logger.info(f"Using fixed weights for return simulation: {dict(zip(self.mean_returns.index, optimal_weights))}")
-        
-        for i in range(num_simulations):
-            # Randomly generate future returns from a multivariate normal distribution.
-            simulated_returns = np.random.multivariate_normal(
-                self.mean_returns.values / 252,  # Convert to daily returns.
-                self.cov_matrix.values / 252,    # Convert to daily covariance.
-                time_horizon
-            )
-            
-            # Calculate cumulative returns.
-            cumulative_returns = np.prod(1 + simulated_returns, axis=0) - 1
-            
-            # Calculate cumulative portfolio return.
-            portfolio_return = np.dot(optimal_weights, cumulative_returns)
-            
-            # Annualize the cumulative return.
-            years = time_horizon / 252
-            annualized_return = (1 + portfolio_return) ** (1 / years) - 1 if years > 0 else portfolio_return
-            
-            # Annualized portfolio risk.
-            portfolio_variance = np.dot(optimal_weights.T, np.dot(self.cov_matrix, optimal_weights))
-            portfolio_risk = np.sqrt(portfolio_variance)
-            
-            # Sharpe ratio on an annualized basis.
-            sharpe_ratio = (annualized_return - self.risk_free_rate) / portfolio_risk if portfolio_risk > 0 else 0
-            
-            result = {
-                'simulated_return': annualized_return,
-                'risk': portfolio_risk,
-                'sharpe_ratio': sharpe_ratio,
-                'simulation_type': 'return_based'
-            }
-            
-            # Log the first five results for debugging.
-            if i < 5:
-                logger.info(f"Return simulation {i+1}: return={portfolio_return:.4f}, risk={portfolio_risk:.4f}")
-            
-            results.append(result)
-        
-        df = pd.DataFrame(results)
-        logger.info("Return-based Monte Carlo simulation completed successfully")
-        
-        return df
     
     def optimize_min_variance_portfolio(self) -> Dict[str, Any]:
         """
@@ -313,21 +279,35 @@ class PortfolioCalculator:
         num_assets = len(self.mean_returns)
         optimization_type = "max_sharpe" if target_return is None else "min_risk"
 
+        if target_return is None:
+            # With long-only weights summing to 1, every portfolio has a nonpositive
+            # excess return when no asset beats the risk-free rate. Maximizing a
+            # negative Sharpe ratio would favor the riskiest assets, so the tangency
+            # portfolio is undefined.
+            max_excess_return = float(self.mean_returns.max()) - self.risk_free_rate
+            if max_excess_return <= 0:
+                message = _(
+                    'No asset has an expected return above the risk-free rate; the maximum Sharpe ratio portfolio is undefined'
+                )
+                logger.warning("%s: max_excess_return=%s", message, max_excess_return)
+                return {
+                    'success': False,
+                    'optimization_type': optimization_type,
+                    'target_return': None,
+                    'optimizer_success': False,
+                    'optimizer_message': message
+                }
+
         if target_return is not None:
+            # The target is a lower bound on return, so any target at or below the
+            # minimum-variance portfolio's return is feasible. Only targets above
+            # the highest single-asset return are unreachable without short selling.
             tolerance = 1e-8
             min_feasible_return = float(self.mean_returns.min())
             max_feasible_return = float(self.mean_returns.max())
 
-            if (
-                target_return < min_feasible_return - tolerance or
-                target_return > max_feasible_return + tolerance
-            ):
-                nearest_feasible_return = (
-                    min_feasible_return
-                    if target_return < min_feasible_return
-                    else max_feasible_return
-                )
-                target_return_gap = float(nearest_feasible_return - target_return)
+            if target_return > max_feasible_return + tolerance:
+                target_return_gap = float(max_feasible_return - target_return)
                 message = _(
                     'Target return is outside the feasible long-only return range'
                 )
@@ -358,11 +338,14 @@ class PortfolioCalculator:
         # Constraints
         constraints = [{'type': 'eq', 'fun': lambda x: np.sum(x) - 1}]  # Weights must sum to 1.
         
-        # Target return constraint (when provided).
+        # Target return constraint (when provided): expected return >= target.
+        # An equality constraint would return dominated portfolios below the
+        # minimum-variance return (higher risk for lower return).
         if target_return is not None:
+            mean_returns_arr = self.mean_returns.values
             constraints.append({
-                'type': 'eq',
-                'fun': lambda x: np.sum(self.mean_returns * x) - target_return
+                'type': 'ineq',
+                'fun': lambda x: mean_returns_arr @ x - target_return
             })
         
         # Bounds (0 <= weight <= 1, no short selling).
@@ -404,7 +387,7 @@ class PortfolioCalculator:
             if target_return is not None:
                 target_return_gap = float(optimal_metrics['expected_return'] - target_return)
                 target_return_achieved = bool(
-                    result.success and abs(target_return_gap) <= 1e-4
+                    result.success and target_return_gap >= -1e-4
                 )
             
             # Assemble the result.
@@ -519,12 +502,12 @@ class PortfolioCalculator:
             stats[asset] = {
                 'expected_return': annual_mean,
                 'risk': annual_std,
-                'sharpe_ratio': (annual_mean - self.risk_free_rate) / annual_std,
+                'sharpe_ratio': (annual_mean - self.risk_free_rate) / annual_std if annual_std > 0 else 0,
                 'skewness': asset_returns.skew(),
-                'kurtosis': asset_returns.kurtosis(),
+                'kurtosis': asset_returns.kurtosis(),  # Excess kurtosis (0 for a normal distribution)
                 'min_return': asset_returns.min(),
                 'max_return': asset_returns.max(),
-                **self.calculate_annual_normal_downside_metrics(annual_mean, annual_std)
+                **self.calculate_annual_lognormal_downside_metrics(annual_mean, annual_std)
             }
         
         return stats
@@ -826,7 +809,7 @@ class PortfolioCalculator:
     
     def _recommend_min_simulations(self, counts: List[int], returns: List[float], risks: List[float]) -> int:
         """Calculate the minimum recommended simulation count."""
-        threshold = 0.001  # Treat changes of 1% or less as stable.
+        threshold = 0.001  # Treat relative changes below 0.1% as stable.
         
         for i in range(1, len(counts)):
             return_change = abs(returns[i] - returns[i-1]) / abs(returns[i-1]) if returns[i-1] != 0 else 0

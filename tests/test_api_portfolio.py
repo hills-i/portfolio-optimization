@@ -50,6 +50,16 @@ class TestValidateInputsEndpoint:
         data = resp.get_json()
         assert data['valid'] is False
 
+    def test_string_numeric_parameter_returns_400(self, client):
+        resp = client.post('/api/validate', json={
+            'tickers': ['AAPL', 'GOOGL'],
+            'start_date': '2022-01-01',
+            'end_date': '2024-01-01',
+            'risk_free_rate': '0.01'
+        })
+        assert resp.status_code == 200
+        assert resp.get_json()['valid'] is False
+
     def test_invalid_input(self, client):
         resp = client.post('/api/validate', json={
             'tickers': ['AAPL'],  # too few
@@ -228,7 +238,7 @@ class TestAnalyzePortfolioEndpoint:
         assert 'asset_statistics' in data
         assert 'correlation_matrix' in data
         assert data['risk_metric_metadata']['var'] == {
-            'method': 'parametric_normal',
+            'method': 'parametric_lognormal',
             'horizon': 'annual',
             'unit': 'return_rate',
             'confidence_levels': [0.95, 0.99],
@@ -311,6 +321,29 @@ class TestAnalyzePortfolioEndpoint:
         assert target_error['target_return_gap'] < 0
         assert 'optimizer_message' in target_error
         assert 'Target return optimization failed or was infeasible' in data['warnings']
+
+    @patch('app.api.portfolio.DataFetcher')
+    def test_analysis_reports_undefined_max_sharpe(self, mock_fetcher_cls, client):
+        fetch_result = self._make_fetch_result()
+        # Steadily declining prices: no asset beats the risk-free rate.
+        trend = np.linspace(1.0, 0.7, len(fetch_result['data']))
+        fetch_result['data'] = fetch_result['data'].mul(trend, axis=0)
+        mock_instance = MagicMock()
+        mock_instance.fetch_stock_data.return_value = fetch_result
+        mock_fetcher_cls.return_value = mock_instance
+
+        resp = client.post('/api/analyze', json={
+            'tickers': ['AAPL', 'GOOGL'],
+            'start_date': '2022-01-01',
+            'end_date': '2024-01-01',
+            'simulation_count': 1000,
+            'risk_free_rate': 0.20
+        })
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert 'max_sharpe' not in data['optimal_portfolios']
+        assert data['optimization_errors']['max_sharpe']['optimizer_success'] is False
+        assert 'Maximum Sharpe ratio optimization failed or was undefined' in data['warnings']
 
     @patch('app.api.portfolio.DataFetcher')
     def test_analysis_with_language(self, mock_fetcher_cls, client):

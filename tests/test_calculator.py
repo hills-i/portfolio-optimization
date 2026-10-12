@@ -35,7 +35,7 @@ class TestLoadData:
         calc = PortfolioCalculator()
         calc.load_data(sample_price_data)
         daily_returns = sample_price_data.pct_change().dropna()
-        expected = daily_returns.mean() * 252
+        expected = daily_returns.mean() * calc.periods_per_year
         pd.testing.assert_series_equal(calc.mean_returns, expected)
 
     def test_cov_matrix_annualized(self, app_context, sample_price_data):
@@ -43,8 +43,30 @@ class TestLoadData:
         calc = PortfolioCalculator()
         calc.load_data(sample_price_data)
         daily_returns = sample_price_data.pct_change().dropna()
-        expected = daily_returns.cov() * 252
+        expected = daily_returns.cov() * calc.periods_per_year
         pd.testing.assert_frame_equal(calc.cov_matrix, expected)
+
+    @pytest.mark.parametrize('freq, expected', [
+        ('B', 260.9),  # Weekdays only (no holidays)
+        ('D', 365.25),  # Every calendar day (e.g. crypto assets)
+    ])
+    def test_periods_per_year_follows_observation_frequency(self, app_context, freq, expected):
+        from app.utils.calculator import PortfolioCalculator
+        dates = pd.date_range(start='2020-01-01', end='2023-12-31', freq=freq)
+        prices = pd.DataFrame({
+            'A': np.linspace(100, 120, len(dates)),
+            'B': np.linspace(50, 40, len(dates)),
+        }, index=dates)
+        calc = PortfolioCalculator()
+        calc.load_data(prices)
+        assert calc.periods_per_year == pytest.approx(expected, rel=0.01)
+
+    def test_periods_per_year_falls_back_without_dates(self, app_context):
+        from app.utils.calculator import PortfolioCalculator, TRADING_DAYS_PER_YEAR
+        prices = pd.DataFrame({'A': [100.0, 101.0, 102.0], 'B': [50.0, 49.0, 51.0]})
+        calc = PortfolioCalculator()
+        calc.load_data(prices)
+        assert calc.periods_per_year == TRADING_DAYS_PER_YEAR
 
     def test_load_data_empty_df(self, app_context):
         """An empty DataFrame should not raise an error (0-column DataFrame)."""
@@ -80,10 +102,13 @@ class TestCalculatePortfolioMetrics:
 
     def test_downside_metrics_calculation(self, app_context):
         from app.utils.calculator import PortfolioCalculator
-        metrics = PortfolioCalculator.calculate_annual_normal_downside_metrics(0.10, 0.20)
+        metrics = PortfolioCalculator.calculate_annual_lognormal_downside_metrics(0.10, 0.20)
 
-        expected_p05 = 0.10 - abs(norm.ppf(0.05)) * 0.20
-        expected_p01 = 0.10 - abs(norm.ppf(0.01)) * 0.20
+        # Lognormal gross return matched to arithmetic mean 10% and std 20%.
+        log_var = np.log(1 + (0.20 / 1.10) ** 2)
+        log_mean = np.log(1.10) - log_var / 2
+        expected_p05 = np.exp(log_mean + norm.ppf(0.05) * np.sqrt(log_var)) - 1
+        expected_p01 = np.exp(log_mean + norm.ppf(0.01) * np.sqrt(log_var)) - 1
 
         assert abs(metrics['annual_return_p05'] - expected_p05) < 1e-12
         assert abs(metrics['annual_return_p01'] - expected_p01) < 1e-12
@@ -92,12 +117,27 @@ class TestCalculatePortfolioMetrics:
 
     def test_downside_metrics_floor_negative_loss_at_zero(self, app_context):
         from app.utils.calculator import PortfolioCalculator
-        metrics = PortfolioCalculator.calculate_annual_normal_downside_metrics(0.50, 0.01)
+        metrics = PortfolioCalculator.calculate_annual_lognormal_downside_metrics(0.50, 0.01)
 
         assert metrics['annual_return_p05'] > 0
         assert metrics['annual_return_p01'] > 0
         assert metrics['var_95'] == 0.0
         assert metrics['var_99'] == 0.0
+
+    def test_downside_metrics_never_exceed_total_loss(self, app_context):
+        """High volatility must not produce a loss beyond -100% (normal approximation did)."""
+        from app.utils.calculator import PortfolioCalculator
+        metrics = PortfolioCalculator.calculate_annual_lognormal_downside_metrics(0.10, 0.60)
+
+        assert -1.0 < metrics['annual_return_p01'] < metrics['annual_return_p05'] < 0.10
+        assert 0 < metrics['var_95'] < metrics['var_99'] < 1.0
+
+    def test_downside_metrics_total_loss_mean(self, app_context):
+        from app.utils.calculator import PortfolioCalculator
+        metrics = PortfolioCalculator.calculate_annual_lognormal_downside_metrics(-1.0, 0.30)
+
+        assert metrics['var_95'] == 1.0
+        assert metrics['var_99'] == 1.0
 
     def test_concentrated_weight(self, app_context, loaded_calculator):
         """Allocate 100% to a single asset."""
@@ -185,6 +225,41 @@ class TestOptimizePortfolio:
         assert result['optimization_type'] == 'min_risk'
         assert result['target_return'] == target
         assert result['target_return_achieved'] is True
+
+    def test_target_below_min_variance_return_returns_min_variance(self, app_context, loaded_calculator):
+        """A target below the GMV return must not yield a dominated portfolio."""
+        gmv = loaded_calculator.optimize_min_variance_portfolio()
+        target = float(loaded_calculator.mean_returns.min()) - 0.05
+        result = loaded_calculator.optimize_portfolio(target_return=target)
+
+        assert result['success'] is True
+        assert result['target_return_achieved'] is True
+        assert result['target_return_gap'] > 0
+        assert result['metrics']['risk'] == pytest.approx(gmv['metrics']['risk'], abs=1e-4)
+        assert result['metrics']['expected_return'] == pytest.approx(
+            gmv['metrics']['expected_return'], abs=1e-4
+        )
+
+    def test_max_sharpe_undefined_when_no_asset_beats_risk_free_rate(self, app_context, loaded_calculator):
+        loaded_calculator.risk_free_rate = float(loaded_calculator.mean_returns.max()) + 0.01
+        result = loaded_calculator.optimize_portfolio()
+
+        assert result['success'] is False
+        assert result['optimization_type'] == 'max_sharpe'
+        assert result['optimizer_success'] is False
+        assert 'weights' not in result
+
+    def test_max_sharpe_ignores_high_risk_low_return_asset(self, app_context):
+        """Regression: negative-excess case used to pick the riskiest asset."""
+        from app.utils.calculator import PortfolioCalculator
+        calc = PortfolioCalculator()
+        assets = ['HIGH_RISK', 'LOW_RISK']
+        calc.returns = pd.DataFrame(columns=assets)
+        calc.mean_returns = pd.Series([0.00, 0.05], index=assets)
+        calc.cov_matrix = pd.DataFrame(np.diag([0.6 ** 2, 0.1 ** 2]), index=assets, columns=assets)
+        calc.risk_free_rate = 0.10
+
+        assert calc.optimize_portfolio()['success'] is False
 
     def test_infeasible_target_fails(self, app_context, loaded_calculator):
         result = loaded_calculator.optimize_portfolio(target_return=0.8)

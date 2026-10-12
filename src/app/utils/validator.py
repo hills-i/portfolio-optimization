@@ -1,3 +1,4 @@
+import math
 import re
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Tuple
@@ -6,8 +7,9 @@ from flask_babel import gettext as _
 class InputValidator:
     """Validator for input data."""
     
-    # Regular expression pattern for ticker symbols.
-    TICKER_PATTERN = re.compile(r'^[A-Z0-9]{1,8}(\.[A-Z]{1,3})?$')
+    # Regular expression pattern for Yahoo Finance ticker symbols, e.g. AAPL,
+    # 7203.T, BRK-B, ^N225 (index), JPY=X (FX), ES=F (futures).
+    TICKER_PATTERN = re.compile(r'^\^?[A-Z0-9]{1,10}([.\-][A-Z0-9]{1,4})?(=[A-Z])?$')
     
     def __init__(self, config):
         self.config = config
@@ -103,7 +105,7 @@ class InputValidator:
             if start < min_start_date:
                 result['warnings'].append(_('Start date may be too old. Data may not be available'))
                 
-        except ValueError as e:
+        except (TypeError, ValueError):
             result['valid'] = False
             result['errors'].append(_('Invalid date format (please use YYYY-MM-DD format)'))
         
@@ -245,7 +247,31 @@ class InputValidator:
         
         if not result['valid']:
             return result
-        
+
+        # Type checks (comparisons below would raise TypeError on other types)
+        tickers = inputs['tickers']
+        if not isinstance(tickers, list) or not all(isinstance(t, str) for t in tickers):
+            result['valid'] = False
+            result['errors'].append(_('Ticker symbols must be a list of strings'))
+
+        for field in ['target_return', 'risk_free_rate', 'simulation_count']:
+            value = inputs.get(field)
+            if value is None:
+                continue
+            is_number = (
+                isinstance(value, (int, float)) and
+                not isinstance(value, bool) and
+                math.isfinite(value)
+            )
+            if field == 'simulation_count':
+                is_number = is_number and float(value).is_integer()
+            if not is_number:
+                result['valid'] = False
+                result['errors'].append(_('%s must be a number') % field)
+
+        if not result['valid']:
+            return result
+
         # Per-field validation
         validations = [
             ('tickers', self.validate_tickers(inputs['tickers'])),

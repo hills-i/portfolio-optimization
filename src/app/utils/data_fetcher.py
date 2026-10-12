@@ -62,31 +62,42 @@ class DataFetcher:
             stock_data = {}
             successful_tickers = []
             failed_tickers = []
-            
+            exchange_timezones = set()
+
             for i, ticker in enumerate(tickers):
                 try:
                     if progress_callback:
                         progress = int((i / len(tickers)) * 70)  # Up to 70%
                         progress_callback(_('Retrieving data for %s...') % ticker, progress)
-                    
-                    # Retrieve data with yfinance.
+
+                    # Retrieve split- and dividend-adjusted prices (total return basis).
                     stock = yf.Ticker(ticker)
-                    hist = stock.history(start=start_date, end=end_date, timeout=self.timeout)
-                    
+                    hist = stock.history(start=start_date, end=end_date, auto_adjust=True, timeout=self.timeout)
+
                     if hist.empty:
                         failed_tickers.append(ticker)
                         logger.warning(f"No data found for ticker: {ticker}")
                         continue
-                    
+
                     # Keep only closing prices.
                     closes = hist['Close']
                     closes = closes.dropna()
-                    
+
                     if len(closes) < 20:  # At least 20 days of data are required.
                         failed_tickers.append(ticker)
                         result['warnings'].append(_('%s: Insufficient data (days retrieved: %d)') % (ticker, len(closes)))
                         continue
-                    
+
+                    # yfinance indexes prices at local midnight in the exchange time zone.
+                    # Align by calendar date so that assets from different exchanges
+                    # (e.g. Tokyo and New York) share the same index.
+                    if isinstance(closes.index, pd.DatetimeIndex):
+                        if closes.index.tz is not None:
+                            exchange_timezones.add(str(closes.index.tz))
+                            closes.index = closes.index.tz_localize(None)
+                        closes.index = closes.index.normalize()
+                        closes = closes[~closes.index.duplicated(keep='last')]
+
                     stock_data[ticker] = closes
                     successful_tickers.append(ticker)
                     
@@ -106,18 +117,61 @@ class DataFetcher:
                 return result
             
             # Build the DataFrame.
-            price_data = pd.DataFrame(stock_data)
-            
-            # Handle missing data.
-            price_data = self._handle_missing_data(price_data)
-            
+            raw_price_data = pd.DataFrame(stock_data)
+
             if progress_callback:
                 progress_callback(_('Preprocessing data...'), 90)
-            
-            # Run data quality checks.
-            quality_issues = self._check_data_quality(price_data)
+
+            # Run data quality checks on each asset's own trading days.
+            quality_issues = self._check_data_quality(raw_price_data)
             result['warnings'].extend(quality_issues)
-            
+
+            # Exclude assets whose prices never change: their variance is zero,
+            # which makes Sharpe ratios and correlations undefined. Do this before
+            # aligning dates so they do not shorten the common period.
+            constant_tickers = [
+                ticker for ticker in raw_price_data.columns
+                if raw_price_data[ticker].dropna().nunique() <= 1
+            ]
+            for ticker in constant_tickers:
+                result['warnings'].append(_('%s: No price variation in the analysis period') % ticker)
+                successful_tickers.remove(ticker)
+                failed_tickers.append(ticker)
+            raw_price_data = raw_price_data.drop(columns=constant_tickers)
+
+            # Handle missing data.
+            price_data = self._handle_missing_data(raw_price_data)
+
+            if len(successful_tickers) < 2:
+                result['errors'].append(_('Less than 2 assets have valid data available'))
+                result['metadata']['tickers_success'] = successful_tickers
+                result['metadata']['tickers_failed'] = failed_tickers
+                return result
+
+            if len(price_data) < 20:
+                result['errors'].append(
+                    _('Insufficient overlapping data across assets (common trading days: %d)') % len(price_data)
+                )
+                result['metadata']['tickers_success'] = successful_tickers
+                result['metadata']['tickers_failed'] = failed_tickers
+                return result
+
+            # Warn when the common period is shorter than the available history,
+            # e.g. because one asset was listed later than the others.
+            earliest_start = raw_price_data.apply(lambda s: s.first_valid_index()).min()
+            if price_data.index.min() - earliest_start > timedelta(days=7):
+                result['warnings'].append(
+                    _('Analysis period was shortened to the date range common to all assets (%(start)s to %(end)s)') % {
+                        'start': price_data.index.min().strftime('%Y-%m-%d'),
+                        'end': price_data.index.max().strftime('%Y-%m-%d')
+                    }
+                )
+
+            if len(exchange_timezones) > 1:
+                result['warnings'].append(
+                    _('Assets trade on exchanges in different time zones. Daily correlations may be underestimated, and returns are measured in each asset\'s local currency.')
+                )
+
             # Populate the success result.
             result['success'] = True
             result['data'] = price_data
@@ -132,8 +186,10 @@ class DataFetcher:
             })
             
             # Add warnings for failed tickers.
-            if failed_tickers:
-                result['warnings'].append(_('Failed to retrieve data for the following assets: %s') % ', '.join(failed_tickers))
+            # Constant-price assets already have their own warning.
+            fetch_failed_tickers = [t for t in failed_tickers if t not in constant_tickers]
+            if fetch_failed_tickers:
+                result['warnings'].append(_('Failed to retrieve data for the following assets: %s') % ', '.join(fetch_failed_tickers))
             
             if progress_callback:
                 progress_callback(_('Data retrieval completed'), 100)
@@ -156,15 +212,12 @@ class DataFetcher:
         Returns:
             pd.DataFrame: Processed DataFrame.
         """
-        # Forward fill.
-        data = data.ffill()
-        
-        # Backward fill for cases where the first value is missing.
-        data = data.bfill()
-        
-        # Keep only dates where every ticker has data.
+        # Keep only dates where every ticker has data. Filling gaps instead
+        # (ffill/bfill) would create artificial zero returns on holidays and
+        # before an asset's listing date, understating volatility and correlation.
+        # Dropping a date folds its move into the next common day's return.
         data = data.dropna(axis=0, how='any')
-        
+
         return data
     
     def _check_data_quality(self, data: pd.DataFrame) -> List[str]:
@@ -179,9 +232,11 @@ class DataFetcher:
         """
         warnings = []
         
-        # Run quality checks for each ticker.
+        # Run quality checks for each ticker on its own trading days.
         for ticker in data.columns:
-            prices = data[ticker]
+            prices = data[ticker].dropna()
+            if prices.empty:
+                continue
             
             # Check for extreme price movements.
             returns = prices.pct_change().dropna()
@@ -196,9 +251,9 @@ class DataFetcher:
                 warnings.append(_('%s: Zero or negative prices detected (%d days)') % (ticker, zero_prices))
             
             # Check data continuity.
-            business_days = pd.bdate_range(start=data.index.min(), end=data.index.max())
-            
-            missing_ratio = 1 - (len(data) / len(business_days))
+            business_days = pd.bdate_range(start=prices.index.min(), end=prices.index.max())
+
+            missing_ratio = 1 - (len(prices) / len(business_days))
             if missing_ratio > 0.1:  # More than 10% missing business days
                 warnings.append(_('%s: High data missing ratio detected (missing: %s)') % (ticker, f'{missing_ratio:.1%}'))
         

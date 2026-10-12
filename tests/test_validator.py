@@ -72,7 +72,19 @@ class TestValidateTickers:
 
     def test_invalid_format_too_long(self, app_context, mock_config):
         v = self._make_validator(mock_config)
-        r = v.validate_tickers(['ABCDEFGHI', 'AAPL'])  # 9 characters > 8.
+        r = v.validate_tickers(['ABCDEFGHIJK', 'AAPL'])  # 11 characters > 10.
+        assert r['valid'] is False
+
+    @pytest.mark.parametrize('ticker', ['7203.T', 'BRK-B', '^N225', 'JPY=X', 'EURUSD=X', 'ES=F', 'VOD.L'])
+    def test_valid_yahoo_symbol_formats(self, app_context, mock_config, ticker):
+        v = self._make_validator(mock_config)
+        r = v.validate_tickers([ticker, 'AAPL'])
+        assert r['valid'] is True
+
+    @pytest.mark.parametrize('ticker', ['A..B', '=X', '^', 'AAPL;', 'AA PL'])
+    def test_invalid_symbol_formats(self, app_context, mock_config, ticker):
+        v = self._make_validator(mock_config)
+        r = v.validate_tickers([ticker, 'AAPL'])
         assert r['valid'] is False
 
     def test_invalid_format_special_chars(self, app_context, mock_config):
@@ -348,6 +360,44 @@ class TestValidateAllInputs:
         r = v.validate_all_inputs(inputs)
         assert r['valid'] is True
         assert 'field_results' in r
+
+    @pytest.mark.parametrize('field,value', [
+        ('target_return', '0.1'),
+        ('risk_free_rate', '0.01'),
+        ('simulation_count', '5000'),
+        ('simulation_count', 5000.5),
+        ('risk_free_rate', True),
+        ('target_return', float('nan')),
+    ])
+    def test_non_numeric_parameters_invalid(self, app_context, mock_config, field, value):
+        v = self._make_validator(mock_config)
+        inputs = {
+            'tickers': ['AAPL', 'GOOGL'],
+            'start_date': '2022-01-01',
+            'end_date': '2024-01-01',
+            field: value
+        }
+        r = v.validate_all_inputs(inputs)
+        assert r['valid'] is False
+
+    @pytest.mark.parametrize('tickers', ['AAPL,GOOGL', ['AAPL', 123]])
+    def test_tickers_must_be_list_of_strings(self, app_context, mock_config, tickers):
+        v = self._make_validator(mock_config)
+        r = v.validate_all_inputs({
+            'tickers': tickers,
+            'start_date': '2022-01-01',
+            'end_date': '2024-01-01'
+        })
+        assert r['valid'] is False
+
+    def test_non_string_date_invalid(self, app_context, mock_config):
+        v = self._make_validator(mock_config)
+        r = v.validate_all_inputs({
+            'tickers': ['AAPL', 'GOOGL'],
+            'start_date': 20220101,
+            'end_date': '2024-01-01'
+        })
+        assert r['valid'] is False
 
     def test_missing_tickers(self, app_context, mock_config):
         v = self._make_validator(mock_config)

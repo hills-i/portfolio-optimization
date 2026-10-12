@@ -494,3 +494,37 @@ msgstr "最適ポートフォリオ資産配分（最小分散）"
 
 msgid "Optimal Portfolio Asset Allocation (Target Return Achievement)"
 msgstr "最適ポートフォリオ資産配分（目標リターン達成）"
+
+#, python-format
+msgid "%s: No price variation in the analysis period"
+msgstr "%s: 分析期間中に価格変動がありません"
+
+#, python-format
+msgid "Insufficient overlapping data across assets (common trading days: %d)"
+msgstr "資産間で共通するデータが不足しています（共通取引日数: %d）"
+
+#, python-format
+msgid "Analysis period was shortened to the date range common to all assets (%(start)s to %(end)s)"
+msgstr "分析期間を全資産に共通する期間（%(start)s 〜 %(end)s）に短縮しました"
+
+msgid "Assets trade on exchanges in different time zones. Daily correlations may be underestimated, and returns are measured in each asset's local currency."
+msgstr "異なるタイムゾーンの取引所の資産が含まれています。日次の相関が過小評価される可能性があり、リターンは各資産の現地通貨建てです。"
+
+msgid "No asset has an expected return above the risk-free rate; the maximum Sharpe ratio portfolio is undefined"
+msgstr "リスクフリーレートを上回る期待リターンの資産がないため、最大シャープレシオ・ポートフォリオは定義できません"
+
+msgid "Ticker symbols must be a list of strings"
+msgstr "ティッカーシンボルは文字列のリストである必要があります"
+
+#, python-format
+msgid "%s must be a number"
+msgstr "%sは数値である必要があります"
+
+msgid "Warnings"
+msgstr "警告"
+
+msgid "Maximum Sharpe ratio optimization failed or was undefined"
+msgstr "最大シャープレシオの最適化に失敗したか、定義できませんでした"
+
+msgid "Target return optimization failed or was infeasible"
+msgstr "目標リターンの最適化に失敗したか、実現できませんでした"

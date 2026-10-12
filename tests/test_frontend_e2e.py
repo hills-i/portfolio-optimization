@@ -160,6 +160,22 @@ class TestErrorMessageEscaping:
         assert app_page.evaluate('window.__xss') is None
 
 
+class TestWarnings:
+
+    def test_warnings_are_rendered_as_text_and_cleared(self, app_page):
+        payload = '<img src=x onerror="window.__xss = 1">'
+        app_page.evaluate('w => showWarnings(w)', [payload, 'Second warning'])
+
+        warnings_area = app_page.locator('#warningsArea')
+        assert 'd-none' not in warnings_area.get_attribute('class')
+        assert app_page.locator('#warningsList li').all_text_contents() == [payload, 'Second warning']
+        assert app_page.evaluate('window.__xss') is None
+
+        app_page.evaluate('showWarnings([])')
+        assert 'd-none' in warnings_area.get_attribute('class')
+        assert app_page.locator('#warningsList li').count() == 0
+
+
 class TestSuccessfulAnalysis:
 
     def test_results_are_rendered(self, analyzed_page):

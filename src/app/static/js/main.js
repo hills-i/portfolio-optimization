@@ -177,8 +177,9 @@ function validateTicker(input) {
         return false;
     }
     
-    // Basic format check (alphanumeric, dots, hyphens)
-    const tickerPattern = /^[A-Z0-9\.\-]{1,10}$/;
+    // Basic format check (same pattern as InputValidator.TICKER_PATTERN),
+    // e.g. AAPL, 7203.T, BRK-B, ^N225, JPY=X
+    const tickerPattern = /^\^?[A-Z0-9]{1,10}([.\-][A-Z0-9]{1,4})?(=[A-Z])?$/;
     
     if (tickerPattern.test(ticker)) {
         input.classList.remove('is-invalid');
@@ -397,11 +398,9 @@ async function performAnalysis(formData) {
 
 // Display results
 async function displayResults(results) {
-    // Display warning messages
-    if (results.warnings && results.warnings.length > 0) {
-        showWarnings(results.warnings);
-    }
-    
+    // Display warning messages (clears warnings from a previous run)
+    showWarnings(results.warnings || []);
+
     // Update summary cards
     updateSummaryCards(results);
     
@@ -430,11 +429,13 @@ async function displayResults(results) {
 
 // Display warning messages
 function showWarnings(warnings) {
-    warnings.forEach(warning => {
-        console.warn('Warning:', warning);
-    });
-    
-    // TODO: Implement warning message UI
+    const warningsList = document.getElementById('warningsList');
+    warningsList.replaceChildren(...warnings.map(warning => {
+        const item = document.createElement('li');
+        item.textContent = warning;
+        return item;
+    }));
+    document.getElementById('warningsArea').classList.toggle('d-none', warnings.length === 0);
 }
 
 // Reset form
