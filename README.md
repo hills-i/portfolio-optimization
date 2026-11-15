@@ -84,7 +84,7 @@ python src/run.py
 
 3. **⚙️ Configure Parameters**
    - **Simulation Count**: 1,000-50,000 Monte Carlo simulations
-   - **Risk-free Rate**: Annual risk-free rate (default: 0.5%)
+   - **Risk-free Rate**: Annual risk-free rate (default: 5%)
    - **Target Return**: Optional specific return objective
 
 4. **🔄 Run Analysis**
@@ -230,7 +230,7 @@ export APP_ENV="development"
 
 | Setting | Default | Range | Description |
 |---------|---------|-------|-------------|
-| Risk-free Rate | 0.5% | 0-10% | Annual risk-free rate for Sharpe ratio calculations |
+| Risk-free Rate | 5% | 0-10% | Annual risk-free rate for Sharpe ratio calculations |
 | Simulation Count | 10,000 | 1,000-50,000 | Monte Carlo simulation iterations |
 | Analysis Period | 30 years | 1-30 years | Historical data timeframe |
 | Asset Count | 2-20 | 2-20 | Number of supported tickers per analysis |

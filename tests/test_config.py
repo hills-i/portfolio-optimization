@@ -14,7 +14,7 @@ class TestConfig:
 
     def test_default_risk_free_rate(self):
         from config import Config
-        assert Config.DEFAULT_RISK_FREE_RATE == 0.01
+        assert Config.DEFAULT_RISK_FREE_RATE == 0.05
 
     def test_risk_free_rate_bounds(self):
         from config import Config
