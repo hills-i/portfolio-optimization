@@ -146,7 +146,6 @@ def sample_analysis_results(loaded_calculator, sample_mc_results):
         'asset_statistics': asset_stats,
         'correlation_matrix': correlation_matrix.to_dict(),
         'random_portfolios': random_portfolio_payload,
-        'monte_carlo': random_portfolio_payload,
         'optimal_portfolios': optimal_portfolios,
         'efficient_frontier': ef_data,
         'metadata': {

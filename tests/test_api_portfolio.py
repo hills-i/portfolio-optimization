@@ -223,9 +223,7 @@ class TestAnalyzePortfolioEndpoint:
         data = resp.get_json()
         assert data['success'] is True
         assert 'random_portfolios' in data
-        assert 'monte_carlo' in data
-        assert data['monte_carlo']['summary_stats'] == data['random_portfolios']['summary_stats']
-        assert data['monte_carlo']['detailed_analysis'] == data['random_portfolios']['detailed_analysis']
+        assert 'monte_carlo' not in data
         assert data['random_portfolios']['simulation_type'] == 'random_weight_allocation'
         assert data['random_portfolios']['uses_return_paths'] is False
         assert data['random_portfolios']['distribution_assumption'] == 'none_for_future_returns'

@@ -229,7 +229,6 @@ def analyze_portfolio():
             }
         }
         results['random_portfolios'] = random_portfolio_payload
-        results['monte_carlo'] = random_portfolio_payload
         
         # Optimal portfolio calculation
         # 1. Maximum Sharpe ratio portfolio
