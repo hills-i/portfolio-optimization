@@ -2,9 +2,9 @@
 .github
 .gitignore
 
-__pycache__/
+**/__pycache__/
 .pytest_cache/
-*.py[cod]
+**/*.py[cod]
 
 .env
 .env.*
@@ -14,7 +14,8 @@ venv/
 env/
 ENV/
 
-.coverage
+**/.coverage
+**/.coverage.*
 .vscode/
 .codex
 
@@ -25,3 +26,11 @@ src/analyze_result.json
 src/visualize_result.json
 *.db
 *.sqlite3
+.aws/
+.pem
+.key
+credentials.json
+
+.claude/
+CLAUDE.md
+docs/

@@ -62,3 +62,8 @@ CLAUDE.md
 .vscode/*
 .codex
 .claude
+
+.aws/
+.pem
+.key
+credentials.json
