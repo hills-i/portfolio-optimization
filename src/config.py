@@ -20,7 +20,7 @@ class Config:
     DATA_FETCH_TIMEOUT = 30  # 30 seconds
     
     # Calculation settings
-    DEFAULT_RISK_FREE_RATE = 0.01  # 1% (reference value based on 10-year Japanese government bonds)
+    DEFAULT_RISK_FREE_RATE = 0.05  # 1% (reference value based on 10-year Japanese government bonds)
     MIN_RISK_FREE_RATE = -0.05
     MAX_RISK_FREE_RATE = 0.20
     DEFAULT_SIMULATION_COUNT = 10000
