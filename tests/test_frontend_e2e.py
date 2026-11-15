@@ -226,6 +226,86 @@ class TestSuccessfulAnalysis:
         assert page.js_errors == []
 
 
+class TestReanalysis:
+
+    def test_undefined_max_sharpe_clears_charts_and_recovers(self, analyzed_page, monkeypatch):
+        page = analyzed_page
+        page.click('#allocation-tab')
+        page.click('#target-return-tab')
+        page.wait_for_selector('#targetReturnRiskContribution.js-plotly-plot')
+        page.click('#max-sharpe-tab')
+        page.wait_for_selector('#riskContributionChart.js-plotly-plot')
+
+        class DecliningDataFetcher(FakeDataFetcher):
+            def fetch_stock_data(self, *args, **kwargs):
+                result = super().fetch_stock_data(*args, **kwargs)
+                trend = np.linspace(1.0, 0.2, len(result['data']))
+                result['data'] = result['data'].mul(trend, axis=0)
+                return result
+
+        monkeypatch.setattr('app.api.portfolio.DataFetcher', DecliningDataFetcher)
+        page.uncheck('#enableTargetReturn')
+        page.evaluate('async () => { await performAnalysis(getPortfolioFormData()); }')
+
+        assert page.evaluate('currentResults.optimal_portfolios.max_sharpe === undefined')
+        assert 'Maximum Sharpe ratio optimization failed or was undefined' in page.text_content('#warningsList')
+        for chart_id in ['allocationChartMaxSharpe', 'riskContributionChart',
+                         'allocationChartTargetReturn', 'targetReturnRiskContribution']:
+            assert page.evaluate('id => !document.getElementById(id).data', chart_id)
+            assert page.locator(f'#{chart_id} .plot-container').count() == 0
+            assert page.text_content(f'#{chart_id}') == 'No data'
+
+        # Other results remain usable when maximum Sharpe is unavailable.
+        page.click('#min-variance-tab')
+        page.wait_for_selector('#minVarianceRiskContribution.js-plotly-plot')
+        assert page.evaluate('document.getElementById("frontierChart").data.length > 0')
+
+        monkeypatch.setattr('app.api.portfolio.DataFetcher', FakeDataFetcher)
+        page.check('#enableTargetReturn')
+        page.evaluate('async () => { await performAnalysis(getPortfolioFormData()); }')
+        page.click('#max-sharpe-tab')
+        page.wait_for_selector('#allocationChartMaxSharpe.js-plotly-plot')
+        page.wait_for_selector('#riskContributionChart.js-plotly-plot')
+        page.click('#target-return-tab')
+        page.wait_for_selector('#allocationChartTargetReturn.js-plotly-plot')
+        page.wait_for_selector('#targetReturnRiskContribution.js-plotly-plot')
+        assert page.evaluate('!!currentResults.optimal_portfolios.max_sharpe')
+        assert page.js_errors == []
+
+    @pytest.mark.parametrize('active_tab', ['min-variance', 'target-return'])
+    def test_reanalysis_refreshes_active_and_hidden_allocation_tabs(self, analyzed_page, active_tab):
+        page = analyzed_page
+        page.click('#allocation-tab')
+        for tab, risk_id in [('min-variance', 'minVarianceRiskContribution'),
+                             ('target-return', 'targetReturnRiskContribution')]:
+            page.click(f'#{tab}-tab')
+            page.wait_for_selector(f'#{risk_id}.js-plotly-plot')
+        page.click(f'#{active_tab}-tab')
+
+        previous_ticker = page.locator('.ticker-field').first.input_value()
+        page.locator('.ticker-field').first.fill('IBM')
+        page.evaluate('async () => { await performAnalysis(getPortfolioFormData()); }')
+
+        # The selected tab refreshes immediately; hidden tabs refresh when opened.
+        other_tab = 'target-return' if active_tab == 'min-variance' else 'min-variance'
+        chart_ids = {
+            'min-variance': ('allocationChartMinVariance', 'minVarianceRiskContribution'),
+            'target-return': ('allocationChartTargetReturn', 'targetReturnRiskContribution'),
+        }
+        for tab in [active_tab, other_tab]:
+            if tab != active_tab:
+                page.click(f'#{tab}-tab')
+            allocation_id, risk_id = chart_ids[tab]
+            page.wait_for_function(
+                'id => document.getElementById(id).data?.[0].x.includes("IBM")', arg=risk_id
+            )
+            assert previous_ticker not in page.evaluate(
+                'id => document.getElementById(id).data[0].x', risk_id
+            )
+            assert page.locator(f'#{allocation_id}.js-plotly-plot').count() == 1
+        assert page.js_errors == []
+
+
 def frontier_trace_names(page):
     return page.evaluate("document.getElementById('frontierChart').data.map(t => t.name)")
 

@@ -114,9 +114,9 @@ async function generateCharts(results) {
         const allocationChartConfigs = [
             { 
                 allocationId: 'allocationChartMaxSharpe', 
-                allocationKey: 'asset_allocation_max_sharpe',
+                allocationKey: charts.asset_allocation_max_sharpe ? 'asset_allocation_max_sharpe' : 'asset_allocation',
                 riskId: 'riskContributionChart',
-                riskKey: 'risk_contribution_max_sharpe'
+                riskKey: charts.risk_contribution_max_sharpe ? 'risk_contribution_max_sharpe' : 'risk_contribution'
             },
             { 
                 allocationId: 'allocationChartMinVariance', 
@@ -139,38 +139,41 @@ async function generateCharts(results) {
             staticPlot: false
         };
         
-        // Initial rendering is only for max Sharpe ratio (active tab)
-        if (charts.asset_allocation_max_sharpe) {
-            const allocationData = JSON.parse(charts.asset_allocation_max_sharpe);
-            await Plotly.newPlot('allocationChartMaxSharpe', allocationData.data, allocationData.layout, plotConfig);
-        }
-        
-        // Max Sharpe ratio risk contribution
-        if (charts.risk_contribution || charts.risk_contribution_max_sharpe) {
-            const riskKey = charts.risk_contribution_max_sharpe ? 'risk_contribution_max_sharpe' : 'risk_contribution';
-            const riskContribData = JSON.parse(charts[riskKey]);
-            await Plotly.newPlot('riskContributionChart', riskContribData.data, riskContribData.layout, plotConfig);
-        }
-        
-
-        // Save remaining chart data to global variable (used when switching tabs)
+        // Reset both Plotly state and cached data so reanalysis cannot leave old
+        // charts behind, including charts rendered lazily in hidden tabs.
         window.allocationChartsData = {};
-        allocationChartConfigs.forEach(config => {
-            if (charts[config.allocationKey]) {
-                window.allocationChartsData[config.allocationId] = JSON.parse(charts[config.allocationKey]);
+        for (const config of allocationChartConfigs) {
+            for (const [chartId, chartKey] of [
+                [config.allocationId, config.allocationKey],
+                [config.riskId, config.riskKey]
+            ]) {
+                const element = document.getElementById(chartId);
+                if (!element) {
+                    continue;
+                }
+                if (element.data) {
+                    Plotly.purge(element);
+                }
+                element.replaceChildren();
+
+                if (!charts[chartKey]) {
+                    const message = document.createElement('div');
+                    message.className = 'text-center text-muted p-4';
+                    message.textContent = _('No data');
+                    element.append(message);
+                    continue;
+                }
+
+                const chartData = JSON.parse(charts[chartKey]);
+                window.allocationChartsData[chartId] = chartData;
+
+                // Preserve initial rendering and refresh the selected tab now;
+                // other tabs will render their new data when opened.
+                if (config.allocationId === 'allocationChartMaxSharpe' ||
+                    element.closest('.tab-pane')?.classList.contains('active')) {
+                    await Plotly.newPlot(element, chartData.data, chartData.layout, plotConfig);
+                }
             }
-            
-            if (charts[config.riskKey]) {
-                window.allocationChartsData[config.riskId] = JSON.parse(charts[config.riskKey]);
-            }
-        });
-
-
-
-        // For backward compatibility
-        if (charts.asset_allocation && !charts.asset_allocation_max_sharpe) {
-            const allocationData = JSON.parse(charts.asset_allocation);
-            await Plotly.newPlot('allocationChartMaxSharpe', allocationData.data, allocationData.layout, plotConfig);
         }
         
         // Set up tab event handlers
